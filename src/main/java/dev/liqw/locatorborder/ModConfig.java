@@ -1,6 +1,7 @@
 package dev.liqw.locatorborder;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 import net.minecraftforge.common.config.Configuration;
 
@@ -21,6 +22,7 @@ public final class ModConfig {
     public static boolean directionArrows = false;
     public static boolean playerFaces = false;
     public static boolean distanceScale = true;
+    public static String markerColor = "55FFFF";
     public static String colorSource = "WAYPOINT";
     public static String outlineStyle = "BORDER";
     public static String outlineColor = "BLACK";
@@ -80,6 +82,14 @@ public final class ModConfig {
         playerFaces = config.getBoolean("playerFaces", "waypoint", playerFaces, "Render player skin faces.");
         distanceScale = config
             .getBoolean("distanceScale", "waypoint", distanceScale, "Scale player faces down at long distances.");
+        markerColor = config.getString(
+            "markerColor",
+            "waypoint",
+            markerColor,
+            "Shared RGB marker color for every player, written as six hexadecimal digits (for example 55FFFF).");
+        config.getCategory("waypoint")
+            .get("markerColor")
+            .setValidationPattern(Pattern.compile("#?[0-9A-Fa-f]{6}"));
         colorSource = enumValue(config, "colorSource", "waypoint", colorSource, "WAYPOINT", "TEAM");
         outlineStyle = enumValue(config, "outlineStyle", "waypoint", outlineStyle, "BORDER", "SHADOW", "NONE");
         outlineColor = enumValue(config, "outlineColor", "waypoint", outlineColor, "WAYPOINT", "TEAM", "BLACK");
@@ -91,13 +101,27 @@ public final class ModConfig {
             "HOVER",
             "FOCAL",
             "PLAYER_LIST",
+            "ALWAYS",
             "NONE");
-        focusScale = config.getFloat("scale", "focus", focusScale, 1.0F, 4.0F, "Focused waypoint scale.");
+        config.getCategory("focus")
+            .get("focusTrigger")
+            .setValidValues(new String[] { "HOVER", "FOCAL", "PLAYER_LIST", "ALWAYS", "NONE" });
+        focusScale = config.getFloat("scale", "focus", focusScale, 0.25F, 4.0F, "Focused waypoint scale.");
         focusInset = config.getInt("inset", "focus", focusInset, 0, 100, "Additional focused waypoint inset.");
-        displayPlayerName = config
-            .getBoolean("displayPlayerName", "focus", displayPlayerName, "Display the player name while focused.");
-        displayDistance = config
-            .getBoolean("displayDistance", "focus", displayDistance, "Display distance while focused.");
+        config.getBoolean(
+            "displayPlayerName",
+            "focus",
+            true,
+            "Legacy setting. Player names are always displayed above world markers.");
+        config.getCategory("focus")
+            .get("displayPlayerName")
+            .setShowInGui(false);
+        displayPlayerName = true;
+        displayDistance = config.getBoolean(
+            "displayDistance",
+            "focus",
+            displayDistance,
+            "Display distance while looking at a player marker.");
         compass = config.getBoolean("enabled", "compass", compass, "Display cardinal directions.");
         intercardinalCompass = config
             .getBoolean("intercardinal", "compass", intercardinalCompass, "Display intercardinal directions.");

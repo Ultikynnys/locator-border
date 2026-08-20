@@ -18,7 +18,8 @@ public final class ClientProxy extends CommonProxy {
         FMLCommonHandler.instance()
             .bus()
             .register(new ConfigChangeHandler());
-        MinecraftForge.EVENT_BUS.register(new HudRenderer(state));
+        MinecraftForge.EVENT_BUS.register(new WorldMarkerRenderer(state));
+        MinecraftForge.EVENT_BUS.register(new ScreenEdgeMarkerRenderer(state));
     }
 
     @Override
