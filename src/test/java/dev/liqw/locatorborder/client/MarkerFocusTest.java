@@ -7,7 +7,7 @@ import org.junit.Test;
 
 public final class MarkerFocusTest {
 
-    private static final double THRESHOLD = Math.cos(Math.toRadians(3.0D));
+    private static final double THRESHOLD = Math.cos(Math.toRadians(6.0D));
 
     @Test
     public void focusesMarkerUnderCrosshair() {
@@ -21,6 +21,13 @@ public final class MarkerFocusTest {
         double alignment = MarkerFocus.alignment(0.0D, 0.0D, 1.0D, 0.0D, 0.0D, -100.0D);
 
         assertFalse(MarkerFocus.isFocused(alignment, THRESHOLD));
+    }
+
+    @Test
+    public void acceptsMarkerInsidePracticalAimCone() {
+        double alignment = MarkerFocus.alignment(0.0D, 0.0D, 1.0D, 5.0D, 0.0D, 100.0D);
+
+        assertTrue(MarkerFocus.isFocused(alignment, THRESHOLD));
     }
 
     @Test

@@ -1,10 +1,8 @@
 package dev.liqw.locatorborder.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 
@@ -16,26 +14,28 @@ import dev.liqw.locatorborder.network.PlayerSnapshotMessage;
 
 public final class WorldMarkerRenderer {
 
-    private static final double FOCUS_ALIGNMENT = Math.cos(Math.toRadians(3.0D));
+    private static final double FOCUS_ALIGNMENT = Math.cos(Math.toRadians(6.0D));
     private static final double MARKER_HEIGHT = 1.0D;
     private static final float MARKER_RADIUS = 3.0F;
     private static final float LABEL_SCALE = 0.02F;
 
     private final Minecraft minecraft = Minecraft.getMinecraft();
     private final ClientState state;
+    private final LocatorToggle locatorToggle;
 
-    WorldMarkerRenderer(ClientState state) {
+    WorldMarkerRenderer(ClientState state, LocatorToggle locatorToggle) {
         this.state = state;
+        this.locatorToggle = locatorToggle;
     }
 
     @SubscribeEvent
     public void render(RenderWorldLastEvent event) {
-        if (!ModConfig.enabled || minecraft.thePlayer == null
+        if (!locatorToggle.isEnabled() || minecraft.thePlayer == null
             || minecraft.theWorld == null
             || minecraft.gameSettings.hideGUI) return;
 
         PlayerSnapshotMessage.PlayerPosition aimed = aimedMarker(event.partialTicks);
-        boolean playerListPressed = minecraft.gameSettings.keyBindPlayerList.getIsKeyPressed();
+        boolean playerListPressed = PlayerListFocus.isHeld(minecraft);
         setupGl();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
@@ -86,10 +86,15 @@ public final class WorldMarkerRenderer {
                 target.z - RenderManager.instance.viewerPosZ);
             faceCamera();
             float markerScale = Math.max(0.02F, (float) distance * 0.002F);
-            GL11.glScalef(markerScale, markerScale, markerScale);
             float radius = focused ? MARKER_RADIUS * ModConfig.focusScale : MARKER_RADIUS;
-            if (!ModConfig.playerFaces || !renderFace(target, radius)) drawDot(radius, color);
-            renderLabel(target.name, (int) distance + "m", radius, focused);
+            GL11.glPushMatrix();
+            try {
+                GL11.glScalef(markerScale, markerScale, markerScale);
+                if (!ModConfig.playerFaces || !renderFace(target, radius)) drawDot(radius, color);
+            } finally {
+                GL11.glPopMatrix();
+            }
+            renderLabel(target.name, (int) distance + "m", radius * markerScale, focused);
         } finally {
             GL11.glPopMatrix();
         }
@@ -106,14 +111,7 @@ public final class WorldMarkerRenderer {
         drawQuad(radius + 0.75F);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
 
-        ResourceLocation skin = AbstractClientPlayer.getLocationSkin(target.name);
-        AbstractClientPlayer.getDownloadImageSkin(skin, target.name);
-        minecraft.getTextureManager()
-            .bindTexture(skin);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.95F);
-        float diameter = radius * 2.0F;
-        drawFaceLayer(radius, diameter, 8.0F);
-        drawFaceLayer(radius, diameter, 40.0F);
+        PlayerFaceRenderer.drawWorld(minecraft, target.id, radius);
         return true;
     }
 
@@ -124,20 +122,6 @@ public final class WorldMarkerRenderer {
         tessellator.addVertex(radius, -radius, 0.0D);
         tessellator.addVertex(radius, radius, 0.0D);
         tessellator.addVertex(-radius, radius, 0.0D);
-        tessellator.draw();
-    }
-
-    private static void drawFaceLayer(float radius, float diameter, float textureX) {
-        Tessellator tessellator = Tessellator.instance;
-        float minU = textureX / 64.0F;
-        float maxU = (textureX + 8.0F) / 64.0F;
-        float minV = 8.0F / 64.0F;
-        float maxV = 16.0F / 64.0F;
-        tessellator.startDrawingQuads();
-        tessellator.addVertexWithUV(-radius, -radius, 0.0D, minU, maxV);
-        tessellator.addVertexWithUV(radius, -radius, 0.0D, maxU, maxV);
-        tessellator.addVertexWithUV(radius, -radius + diameter, 0.0D, maxU, minV);
-        tessellator.addVertexWithUV(-radius, -radius + diameter, 0.0D, minU, minV);
         tessellator.draw();
     }
 
@@ -164,20 +148,13 @@ public final class WorldMarkerRenderer {
     }
 
     private void renderLabel(String name, String distance, float radius, boolean focused) {
-        String text = focused && ModConfig.displayDistance ? name + " " + distance : name;
+        String text = MarkerLabelRenderer.text(name, distance, focused, ModConfig.displayDistance);
         GL11.glPushMatrix();
         try {
-            GL11.glTranslatef(0.0F, radius + 3.0F, 0.0F);
+            GL11.glTranslatef(0.0F, radius + 0.08F, 0.0F);
             GL11.glScalef(-LABEL_SCALE, -LABEL_SCALE, LABEL_SCALE);
             int x = -minecraft.fontRenderer.getStringWidth(text) / 2;
-            for (int offsetX = -1; offsetX <= 1; offsetX++) {
-                for (int offsetY = -1; offsetY <= 1; offsetY++) {
-                    if (offsetX != 0 || offsetY != 0) {
-                        minecraft.fontRenderer.drawString(text, x + offsetX, offsetY, 0xFF000000);
-                    }
-                }
-            }
-            minecraft.fontRenderer.drawString(text, x, 0, 0xFFFFFFFF);
+            MarkerLabelRenderer.drawOutlined(minecraft.fontRenderer, text, x, 0);
         } finally {
             GL11.glPopMatrix();
         }

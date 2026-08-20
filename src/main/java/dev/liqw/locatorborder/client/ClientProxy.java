@@ -12,14 +12,19 @@ public final class ClientProxy extends CommonProxy {
     public void init() {
         super.init();
         ClientState state = new ClientState();
+        LocatorToggle locatorToggle = new LocatorToggle();
+        locatorToggle.register();
         FMLCommonHandler.instance()
             .bus()
             .register(state);
         FMLCommonHandler.instance()
             .bus()
+            .register(locatorToggle);
+        FMLCommonHandler.instance()
+            .bus()
             .register(new ConfigChangeHandler());
-        MinecraftForge.EVENT_BUS.register(new WorldMarkerRenderer(state));
-        MinecraftForge.EVENT_BUS.register(new ScreenEdgeMarkerRenderer(state));
+        MinecraftForge.EVENT_BUS.register(new WorldMarkerRenderer(state, locatorToggle));
+        MinecraftForge.EVENT_BUS.register(new ScreenEdgeMarkerRenderer(state, locatorToggle));
     }
 
     @Override

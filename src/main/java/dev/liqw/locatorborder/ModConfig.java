@@ -7,12 +7,11 @@ import net.minecraftforge.common.config.Configuration;
 
 public final class ModConfig {
 
-    public static final String[] CLIENT_CATEGORIES = { "general", "waypoint", "focus", "compass", "network" };
+    public static final String[] CLIENT_CATEGORIES = { "waypoint", "focus", "compass", "network" };
 
     private static File configFile;
     private static Configuration configuration;
 
-    public static boolean enabled = true;
     public static int updateIntervalTicks = 10;
     public static boolean sameDimensionOnly = true;
     public static int maximumPlayersPerSnapshot = 256;
@@ -51,7 +50,7 @@ public final class ModConfig {
         Configuration config = configuration;
         config.load();
 
-        enabled = config.getBoolean("enabled", "general", enabled, "Master switch for all mod features.");
+        removeLegacyEnabledProperty(config);
         updateIntervalTicks = config.getInt(
             "updateIntervalTicks",
             "server",
@@ -144,6 +143,21 @@ public final class ModConfig {
     public static synchronized String getConfigPath() {
         if (configFile == null) throw new IllegalStateException("Locator Border config has not been initialized");
         return configFile.getAbsolutePath();
+    }
+
+    private static void removeLegacyEnabledProperty(Configuration config) {
+        if (!config.hasCategory("general") || !config.getCategory("general")
+            .containsKey("enabled")) return;
+        boolean legacyEnabled = config.getCategory("general")
+            .get("enabled")
+            .getBoolean(true);
+        config.getCategory("general")
+            .remove("enabled");
+        LocatorBorder.LOG.info(
+            "Removed legacy general.enabled={}; locator visibility now starts enabled and is controlled by its keybinding.",
+            legacyEnabled);
+        if (config.getCategory("general")
+            .isEmpty()) config.removeCategory(config.getCategory("general"));
     }
 
     private static String enumValue(Configuration config, String key, String category, String fallback,

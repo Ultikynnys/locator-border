@@ -39,7 +39,7 @@ public final class PlayerTracker {
 
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !ModConfig.enabled) return;
+        if (event.phase != TickEvent.Phase.END) return;
         if (++ticks < ModConfig.updateIntervalTicks) return;
         ticks = 0;
 

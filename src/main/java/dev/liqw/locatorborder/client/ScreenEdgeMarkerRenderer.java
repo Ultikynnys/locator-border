@@ -1,12 +1,10 @@
 package dev.liqw.locatorborder.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.MathHelper;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
@@ -23,14 +21,16 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
 
     private final Minecraft minecraft = Minecraft.getMinecraft();
     private final ClientState state;
+    private final LocatorToggle locatorToggle;
 
-    ScreenEdgeMarkerRenderer(ClientState state) {
+    ScreenEdgeMarkerRenderer(ClientState state, LocatorToggle locatorToggle) {
         this.state = state;
+        this.locatorToggle = locatorToggle;
     }
 
     @SubscribeEvent
     public void render(RenderGameOverlayEvent.Post event) {
-        if (event.type != RenderGameOverlayEvent.ElementType.ALL || !ModConfig.enabled
+        if (event.type != RenderGameOverlayEvent.ElementType.ALL || !locatorToggle.isEnabled()
             || minecraft.thePlayer == null
             || minecraft.theWorld == null
             || minecraft.renderViewEntity == null
@@ -39,7 +39,7 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
         ScaledResolution resolution = event.resolution;
         Vec3 eye = minecraft.renderViewEntity.getPosition(event.partialTicks);
         CameraBasis camera = cameraBasis(event.partialTicks);
-        boolean playerListPressed = minecraft.gameSettings.keyBindPlayerList.getIsKeyPressed();
+        boolean playerListPressed = PlayerListFocus.isHeld(minecraft);
         setupGl();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
@@ -73,7 +73,7 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
         GL11.glPushMatrix();
         try {
             GL11.glTranslatef(point.x, point.y, 0.0F);
-            if (ModConfig.playerFaces) renderFace(target.name, size);
+            if (ModConfig.playerFaces) renderFace(target.id, size);
             else renderDot(size, MarkerColor.parse(ModConfig.markerColor));
             renderLabel(target.name, (int) distance + "m", size, focused, point);
         } finally {
@@ -81,15 +81,9 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
         }
     }
 
-    private void renderFace(String name, int size) {
+    private void renderFace(java.util.UUID id, int size) {
         drawRect(-size / 2 - 1, -size / 2 - 1, (size + 1) / 2 + 1, (size + 1) / 2 + 1, 0xFF000000);
-        ResourceLocation skin = AbstractClientPlayer.getLocationSkin(name);
-        AbstractClientPlayer.getDownloadImageSkin(skin, name);
-        minecraft.getTextureManager()
-            .bindTexture(skin);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        Gui.func_152125_a(-size / 2, -size / 2, 8.0F, 8.0F, 8, 8, size, size, 64.0F, 64.0F);
-        Gui.func_152125_a(-size / 2, -size / 2, 40.0F, 8.0F, 8, 8, size, size, 64.0F, 64.0F);
+        PlayerFaceRenderer.drawScreen(minecraft, id, size);
     }
 
     private static void renderDot(int size, int color) {
@@ -113,7 +107,7 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
 
     private void renderLabel(String name, String distance, int size, boolean focused,
         ScreenEdgeProjection.Point point) {
-        String text = focused && ModConfig.displayDistance ? name + " " + distance : name;
+        String text = MarkerLabelRenderer.text(name, distance, focused, ModConfig.displayDistance);
         int width = minecraft.fontRenderer.getStringWidth(text);
         int x;
         int y;
@@ -124,18 +118,7 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
             x = -width / 2;
             y = point.directionY < 0.0F ? size / 2 + 3 : -size / 2 - minecraft.fontRenderer.FONT_HEIGHT - 3;
         }
-        drawOutlinedText(text, x, y);
-    }
-
-    private void drawOutlinedText(String text, int x, int y) {
-        for (int offsetX = -1; offsetX <= 1; offsetX++) {
-            for (int offsetY = -1; offsetY <= 1; offsetY++) {
-                if (offsetX != 0 || offsetY != 0) {
-                    minecraft.fontRenderer.drawString(text, x + offsetX, y + offsetY, 0xFF000000);
-                }
-            }
-        }
-        minecraft.fontRenderer.drawString(text, x, y, 0xFFFFFFFF);
+        MarkerLabelRenderer.drawOutlined(minecraft.fontRenderer, text, x, y);
     }
 
     private CameraBasis cameraBasis(float partialTicks) {
