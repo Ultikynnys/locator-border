@@ -1,62 +1,46 @@
 package dev.liqw.locatorborder;
 
-//~ !skip_replace
+import java.util.Map;
 
-import dev.liqw.locatorborder.config.LocatorBorderConfig;
-import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.ConfigHolder;
-import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
-import net.minecraft.world.InteractionResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-//? fabric
-import net.fabricmc.api.ClientModInitializer;
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.SidedProxy;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.network.NetworkCheckHandler;
+import cpw.mods.fml.relauncher.Side;
 
-//? neoforge {
-/*//~ if <=1.21.10 'AutoConfigClient' -> 'AutoConfig'
-import me.shedaniel.autoconfig.AutoConfigClient;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
-*///? }
+@Mod(
+    modid = LocatorBorder.MOD_ID,
+    name = LocatorBorder.MOD_NAME,
+    version = Tags.VERSION,
+    acceptedMinecraftVersions = "[1.7.10]")
+public final class LocatorBorder {
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+    public static final String MOD_ID = "locatorborder";
+    public static final String MOD_NAME = "Locator Border";
+    public static final Logger LOG = LogManager.getLogger(MOD_ID);
 
-//? neoforge
-//@Mod("locator_border")
-public class LocatorBorder /*? fabric { */ implements ClientModInitializer /*? } */ {
-    public static final String MOD_ID = "locator-border";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    @SidedProxy(
+        clientSide = "dev.liqw.locatorborder.client.ClientProxy",
+        serverSide = "dev.liqw.locatorborder.CommonProxy")
+    public static CommonProxy proxy;
 
-    private void initialize() {
-        ConfigHolder<LocatorBorderConfig> holder = AutoConfig.register(LocatorBorderConfig.class, GsonConfigSerializer::new);
-
-        // temp fix, validatePostLoad isn't called when saving
-        holder.registerSaveListener(((configHolder, config) -> {
-            config.validatePostLoad();
-            return InteractionResult.SUCCESS;
-        }));
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        ModConfig.load(event.getSuggestedConfigurationFile());
+        proxy.preInit();
     }
 
-    //? fabric {
-    @Override
-    public void onInitializeClient() {
-        initialize();
+    @Mod.EventHandler
+    public void init(FMLInitializationEvent event) {
+        proxy.init();
     }
-    //? }
 
-    //? neoforge {
-    /*public LocatorBorder() {
-        initialize();
-
-        ModLoadingContext.get().registerExtensionPoint(IConfigScreenFactory.class, () ->
-                //~ if <=1.21.10 'AutoConfigClient' -> 'AutoConfig'
-                (client, parent) -> AutoConfigClient.getConfigScreen(LocatorBorderConfig.class, parent).get()
-        );
-    }
-    *///? }
-
-    public static LocatorBorderConfig getConfig() {
-        return AutoConfig.getConfigHolder(LocatorBorderConfig.class).getConfig();
+    @NetworkCheckHandler
+    public boolean acceptRemoteVersions(Map<String, String> remoteVersions, Side remoteSide) {
+        return true;
     }
 }

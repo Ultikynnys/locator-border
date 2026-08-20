@@ -1,0 +1,21 @@
+{
+	"modListVersion": 2,
+	"modList": [{
+		"modid": "${modId}",
+		"name": "${modName}",
+		"description": "Renders server-fed player waypoints at the border of the screen.",
+		"version": "${modVersion}",
+		"mcversion": "${minecraftVersion}",
+		"url": "https://github.com/Ultikynnys/locator-border",
+		"updateUrl": "",
+		"authorList": ["liqwtf", "Ultikynnys"],
+		"credits": "Forge 1.7.10 and GTNH port",
+		"logoFile": "assets/locator-border/icon.png",
+		"screenshots": [],
+		"parent": "",
+		"requiredMods": [],
+		"dependencies": [],
+		"dependants": [],
+		"useDependencyInformation": false
+	}]
+}
