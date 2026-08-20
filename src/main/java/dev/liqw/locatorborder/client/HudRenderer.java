@@ -17,7 +17,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import dev.liqw.locatorborder.ModConfig;
 import dev.liqw.locatorborder.network.PlayerSnapshotMessage;
 
-final class HudRenderer extends Gui {
+public final class HudRenderer extends Gui {
 
     private static final int[] CHAT_COLORS = { 0x000000, 0x0000AA, 0x00AA00, 0x00AAAA, 0xAA0000, 0xAA00AA, 0xFFAA00,
         0xAAAAAA, 0x555555, 0x5555FF, 0x55FF55, 0x55FFFF, 0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF };
