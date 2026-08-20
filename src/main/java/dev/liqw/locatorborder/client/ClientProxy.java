@@ -15,6 +15,9 @@ public final class ClientProxy extends CommonProxy {
         FMLCommonHandler.instance()
             .bus()
             .register(state);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(new ConfigChangeHandler());
         MinecraftForge.EVENT_BUS.register(new HudRenderer(state));
     }
 
@@ -22,4 +25,5 @@ public final class ClientProxy extends CommonProxy {
     public void handlePlayerSnapshot(PlayerSnapshotMessage message) {
         ClientState.receive(message);
     }
+
 }

@@ -16,7 +16,8 @@ import cpw.mods.fml.relauncher.Side;
     modid = LocatorBorder.MOD_ID,
     name = LocatorBorder.MOD_NAME,
     version = Tags.VERSION,
-    acceptedMinecraftVersions = "[1.7.10]")
+    acceptedMinecraftVersions = "[1.7.10]",
+    guiFactory = "dev.liqw.locatorborder.client.LocatorBorderGuiFactory")
 public final class LocatorBorder {
 
     public static final String MOD_ID = "locatorborder";

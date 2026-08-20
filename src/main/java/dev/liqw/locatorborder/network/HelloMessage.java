@@ -41,7 +41,12 @@ public final class HelloMessage implements IMessage {
                 PlayerTracker.reject(context.getServerHandler().playerEntity.getUniqueID());
                 return null;
             }
-            PlayerTracker.accept(context.getServerHandler().playerEntity.getUniqueID());
+            if (PlayerTracker.accept(context.getServerHandler().playerEntity.getUniqueID())) {
+                LocatorBorder.LOG.info(
+                    "Accepted Locator Border client {} with protocol {}.",
+                    context.getServerHandler().playerEntity.getCommandSenderName(),
+                    PROTOCOL_VERSION);
+            }
             return null;
         }
     }

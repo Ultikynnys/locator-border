@@ -6,6 +6,11 @@ import net.minecraftforge.common.config.Configuration;
 
 public final class ModConfig {
 
+    public static final String[] CLIENT_CATEGORIES = { "general", "waypoint", "focus", "compass", "network" };
+
+    private static File configFile;
+    private static Configuration configuration;
+
     public static boolean enabled = true;
     public static int updateIntervalTicks = 10;
     public static boolean sameDimensionOnly = true;
@@ -30,8 +35,18 @@ public final class ModConfig {
 
     private ModConfig() {}
 
-    public static void load(File file) {
-        Configuration config = new Configuration(file);
+    public static synchronized void load(File file) {
+        configFile = file;
+        configuration = new Configuration(file);
+        reload();
+    }
+
+    public static synchronized void reload() {
+        if (configuration == null) {
+            if (configFile == null) throw new IllegalStateException("Locator Border config has not been initialized");
+            configuration = new Configuration(configFile);
+        }
+        Configuration config = configuration;
         config.load();
 
         enabled = config.getBoolean("enabled", "general", enabled, "Master switch for all mod features.");
@@ -95,6 +110,16 @@ public final class ModConfig {
             "Discard server waypoint data after this many client ticks without an update.");
 
         if (config.hasChanged()) config.save();
+    }
+
+    public static synchronized Configuration getConfiguration() {
+        if (configuration == null) throw new IllegalStateException("Locator Border config has not been initialized");
+        return configuration;
+    }
+
+    public static synchronized String getConfigPath() {
+        if (configFile == null) throw new IllegalStateException("Locator Border config has not been initialized");
+        return configFile.getAbsolutePath();
     }
 
     private static String enumValue(Configuration config, String key, String category, String fallback,

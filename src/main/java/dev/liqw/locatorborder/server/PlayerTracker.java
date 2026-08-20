@@ -24,8 +24,8 @@ public final class PlayerTracker {
     private static final AtomicLong SEQUENCE = new AtomicLong();
     private int ticks;
 
-    public static void accept(UUID playerId) {
-        COMPATIBLE_CLIENTS.add(playerId);
+    public static boolean accept(UUID playerId) {
+        return COMPATIBLE_CLIENTS.add(playerId);
     }
 
     public static void reject(UUID playerId) {
