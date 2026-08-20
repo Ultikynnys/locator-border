@@ -33,6 +33,7 @@ final class HudRenderer extends Gui {
     public void render(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || !ModConfig.enabled
             || minecraft.thePlayer == null
+            || minecraft.theWorld == null
             || minecraft.gameSettings.hideGUI) return;
 
         ScaledResolution resolution = event.resolution;
@@ -41,12 +42,15 @@ final class HudRenderer extends Gui {
             resolution.getScaledWidth(),
             resolution.getScaledHeight());
         setupGl();
-        for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
-            if (player.dimension != minecraft.thePlayer.dimension) continue;
-            renderPlayer(player, projection, event.partialTicks);
+        try {
+            for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
+                if (player.dimension != minecraft.thePlayer.dimension) continue;
+                renderPlayer(player, projection, event.partialTicks);
+            }
+            if (ModConfig.compass) renderCompass(projection);
+        } finally {
+            restoreGl();
         }
-        if (ModConfig.compass) renderCompass(projection);
-        restoreGl();
     }
 
     private void renderPlayer(PlayerSnapshotMessage.PlayerPosition target, ScreenProjection projection,
@@ -64,16 +68,19 @@ final class HudRenderer extends Gui {
         float scale = 1.0F + (ModConfig.focusScale - 1.0F) * renderState.focus;
         int size = Math.max(1, (int) (baseSize * scale));
         GL11.glPushMatrix();
-        GL11.glTranslatef(renderState.x, renderState.y, 0.0F);
-        if (ModConfig.playerFaces && renderFace(target.id, size, renderState)) {
-            // Face rendered from the tab-list skin cache.
-        } else {
-            int color = waypointColor(target);
-            drawRect(-size / 2, -size / 2, -size / 2 + size, -size / 2 + size, renderState.alpha(color));
+        try {
+            GL11.glTranslatef(renderState.x, renderState.y, 0.0F);
+            if (ModConfig.playerFaces && renderFace(target.id, size, renderState)) {
+                // Face rendered from the tab-list skin cache.
+            } else {
+                int color = waypointColor(target);
+                drawRect(-size / 2, -size / 2, -size / 2 + size, -size / 2 + size, renderState.alpha(color));
+            }
+            if (renderState.focus > 0.0F) renderLabels(target.name, distance, size, renderState);
+            if (ModConfig.directionArrows && Math.abs(dy) > 2.0D) renderArrow(dy > 0.0D, size, renderState);
+        } finally {
+            GL11.glPopMatrix();
         }
-        if (renderState.focus > 0.0F) renderLabels(target.name, distance, size, renderState);
-        if (ModConfig.directionArrows && Math.abs(dy) > 2.0D) renderArrow(dy > 0.0D, size, renderState);
-        GL11.glPopMatrix();
     }
 
     private boolean renderFace(UUID id, int size, ScreenProjection.State state) {
