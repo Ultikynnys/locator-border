@@ -19,23 +19,26 @@ final class PlayerFaceRenderer {
 
     private PlayerFaceRenderer() {}
 
-    static ResourceLocation skin(Minecraft minecraft, UUID id) {
+    static ResourceLocation skin(Minecraft minecraft, UUID id, String name) {
         EntityPlayer player = minecraft.theWorld.func_152378_a(id);
         if (player instanceof AbstractClientPlayer) return ((AbstractClientPlayer) player).getLocationSkin();
-        return AbstractClientPlayer.locationStevePng;
+        if (name == null || name.length() == 0) return null;
+        ResourceLocation skin = AbstractClientPlayer.getLocationSkin(name);
+        AbstractClientPlayer.getDownloadImageSkin(skin, name);
+        return skin;
     }
 
-    static void drawScreen(Minecraft minecraft, UUID id, int size) {
+    static void drawScreen(Minecraft minecraft, ResourceLocation skin, int size) {
         minecraft.getTextureManager()
-            .bindTexture(skin(minecraft, id));
+            .bindTexture(skin);
         resetTextureColor();
         drawScreenLayer(size, BASE_FACE_U);
         drawScreenLayer(size, HAT_FACE_U);
     }
 
-    static void drawWorld(Minecraft minecraft, UUID id, float radius) {
+    static void drawWorld(Minecraft minecraft, ResourceLocation skin, float radius) {
         minecraft.getTextureManager()
-            .bindTexture(skin(minecraft, id));
+            .bindTexture(skin);
         resetTextureColor();
         drawWorldLayer(radius, BASE_FACE_U);
         drawWorldLayer(radius, HAT_FACE_U);

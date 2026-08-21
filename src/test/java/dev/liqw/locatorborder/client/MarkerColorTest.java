@@ -7,14 +7,17 @@ import org.junit.Test;
 public final class MarkerColorTest {
 
     @Test
-    public void parsesRgbHexWithOptionalHash() {
-        assertEquals(0x12ABEF, MarkerColor.parse("12ABEF"));
-        assertEquals(0x55FFFF, MarkerColor.parse("#55ffff"));
+    public void assignsStablePlayerColors() {
+        java.util.UUID first = new java.util.UUID(1L, 2L);
+        java.util.UUID second = new java.util.UUID(3L, 4L);
+
+        assertEquals(MarkerColor.fromPlayer(first), MarkerColor.fromPlayer(first));
+        org.junit.Assert.assertNotEquals(MarkerColor.fromPlayer(first), MarkerColor.fromPlayer(second));
     }
 
     @Test
     public void extractsNormalizedComponents() {
-        int color = MarkerColor.parse("804020");
+        int color = 0x804020;
 
         assertEquals(128.0F / 255.0F, MarkerColor.red(color), 0.0F);
         assertEquals(64.0F / 255.0F, MarkerColor.green(color), 0.0F);
@@ -22,12 +25,7 @@ public final class MarkerColorTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void rejectsMalformedValues() {
-        MarkerColor.parse("red");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void rejectsNull() {
-        MarkerColor.parse(null);
+    public void rejectsNullPlayerId() {
+        MarkerColor.fromPlayer(null);
     }
 }

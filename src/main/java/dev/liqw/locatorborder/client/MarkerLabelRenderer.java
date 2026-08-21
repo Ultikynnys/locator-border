@@ -6,8 +6,9 @@ final class MarkerLabelRenderer {
 
     private MarkerLabelRenderer() {}
 
-    static String text(String name, double distance, boolean revealed, boolean displayDistance) {
-        if (!revealed) return null;
+    static String text(String name, double distance, boolean revealed, boolean displayName, boolean displayDistance) {
+        if (!revealed || !displayName && !displayDistance) return null;
+        if (!displayName) return distance(distance);
         return displayDistance ? name + " " + distance(distance) : name;
     }
 

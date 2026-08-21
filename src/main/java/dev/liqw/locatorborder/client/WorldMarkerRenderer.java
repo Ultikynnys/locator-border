@@ -3,6 +3,7 @@ package dev.liqw.locatorborder.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 
@@ -41,7 +42,9 @@ public final class WorldMarkerRenderer {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
                 boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, player == aimed, playerListPressed);
-                renderMarker(player, focused);
+                float focusProgress = MarkerFocusState
+                    .updateWorld(player.id, focused, ModConfig.animations, event.partialTicks);
+                renderMarker(player, focusProgress);
             }
         } finally {
             restoreGl();
@@ -71,12 +74,12 @@ public final class WorldMarkerRenderer {
         return best;
     }
 
-    private void renderMarker(PlayerSnapshotMessage.PlayerPosition target, boolean focused) {
+    private void renderMarker(PlayerSnapshotMessage.PlayerPosition target, float focusProgress) {
         double dx = target.x - minecraft.thePlayer.posX;
         double dy = target.y - minecraft.thePlayer.posY;
         double dz = target.z - minecraft.thePlayer.posZ;
         double distance = MarkerGeometry.distance(dx, dy, dz);
-        int color = MarkerColor.parse(ModConfig.markerColor);
+        int color = MarkerColorResolver.resolve(minecraft, target);
 
         GL11.glPushMatrix();
         try {
@@ -86,7 +89,8 @@ public final class WorldMarkerRenderer {
                 target.z - RenderManager.instance.viewerPosZ);
             faceCamera();
             float markerScale = markerScale(distance);
-            float radius = MARKER_RADIUS * MarkerSize.scale(focused, ModConfig.waypointScale, ModConfig.focusScale);
+            float stateScale = MarkerSize.scale(focusProgress, ModConfig.waypointScale, ModConfig.focusScale);
+            float radius = MARKER_RADIUS * stateScale;
             GL11.glPushMatrix();
             try {
                 GL11.glScalef(markerScale, markerScale, markerScale);
@@ -96,7 +100,7 @@ public final class WorldMarkerRenderer {
             } finally {
                 GL11.glPopMatrix();
             }
-            renderLabel(target.name, distance, radius * markerScale, markerScale, focused);
+            renderLabel(target.name, distance, radius * markerScale, markerScale * stateScale, focusProgress);
         } finally {
             GL11.glPopMatrix();
         }
@@ -108,12 +112,14 @@ public final class WorldMarkerRenderer {
     }
 
     private boolean renderFace(PlayerSnapshotMessage.PlayerPosition target, float radius) {
+        ResourceLocation skin = PlayerFaceRenderer.skin(minecraft, target.id, target.name);
+        if (skin == null) return false;
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.95F);
         drawQuad(radius + 0.75F);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
 
-        PlayerFaceRenderer.drawWorld(minecraft, target.id, radius);
+        PlayerFaceRenderer.drawWorld(minecraft, skin, radius);
         return true;
     }
 
@@ -132,8 +138,9 @@ public final class WorldMarkerRenderer {
         return (float) distance * MARKER_SCALE_PER_BLOCK;
     }
 
-    private void renderLabel(String name, double distance, float radius, float markerScale, boolean focused) {
-        String text = MarkerLabelRenderer.text(name, distance, focused, ModConfig.displayDistance);
+    private void renderLabel(String name, double distance, float radius, float markerScale, float focusProgress) {
+        String text = MarkerLabelRenderer
+            .text(name, distance, focusProgress > 0.0F, ModConfig.displayPlayerName, ModConfig.displayDistance);
         if (text == null) return;
         GL11.glPushMatrix();
         try {
