@@ -1,6 +1,7 @@
 package dev.liqw.locatorborder.client;
 
 public enum FocusTrigger {
+
     HOVER,
     FOCAL,
     PLAYER_LIST,
@@ -27,8 +28,9 @@ public enum FocusTrigger {
 
     public static FocusTrigger parse(String value) {
         if (value == null) throw new IllegalArgumentException("Focus trigger cannot be null");
-        return valueOf(value.trim()
-            .toUpperCase());
+        return valueOf(
+            value.trim()
+                .toUpperCase());
     }
 
     public static String[] validNames() {

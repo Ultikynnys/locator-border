@@ -66,13 +66,7 @@ public final class ModConfig {
             "Hard limit for one snapshot packet.");
 
         inset = config.getInt("inset", "waypoint", inset, 0, 100, "Distance from the screen edge in pixels.");
-        waypointScale = config.getFloat(
-            "scale",
-            "waypoint",
-            waypointScale,
-            0.25F,
-            4.0F,
-            "Unfocused waypoint scale.");
+        waypointScale = config.getFloat("scale", "waypoint", waypointScale, 0.25F, 4.0F, "Unfocused waypoint scale.");
         playerFaces = config.getBoolean("playerFaces", "waypoint", playerFaces, "Render player skin faces.");
         markerColor = config.getString(
             "markerColor",

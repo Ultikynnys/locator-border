@@ -9,8 +9,6 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
-import org.lwjgl.opengl.GL11;
-
 final class PlayerFaceRenderer {
 
     private static final float TEXTURE_SIZE = 64.0F;
