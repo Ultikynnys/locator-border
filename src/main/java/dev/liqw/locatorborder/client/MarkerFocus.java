@@ -2,6 +2,8 @@ package dev.liqw.locatorborder.client;
 
 final class MarkerFocus {
 
+    static final double AIM_ALIGNMENT = Math.cos(Math.toRadians(6.0D));
+
     private MarkerFocus() {}
 
     static double alignment(double lookX, double lookY, double lookZ, double targetX, double targetY, double targetZ) {
@@ -15,10 +17,9 @@ final class MarkerFocus {
         return alignment >= minimumAlignment;
     }
 
-    static boolean reveal(String trigger, boolean aimed, boolean playerListPressed) {
-        if ("ALWAYS".equals(trigger)) return true;
-        if ("HOVER".equals(trigger) || "FOCAL".equals(trigger)) return aimed;
-        return "PLAYER_LIST".equals(trigger) && playerListPressed;
+    static boolean reveal(FocusTrigger trigger, boolean aimed, boolean playerListPressed) {
+        if (trigger == null) throw new IllegalArgumentException("Focus trigger cannot be null");
+        return trigger.reveals(aimed, playerListPressed);
     }
 
     static boolean isBetter(double alignment, double distanceSquared, double bestAlignment,

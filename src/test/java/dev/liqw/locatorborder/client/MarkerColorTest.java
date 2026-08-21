@@ -12,6 +12,15 @@ public final class MarkerColorTest {
         assertEquals(0x55FFFF, MarkerColor.parse("#55ffff"));
     }
 
+    @Test
+    public void extractsNormalizedComponents() {
+        int color = MarkerColor.parse("804020");
+
+        assertEquals(128.0F / 255.0F, MarkerColor.red(color), 0.0F);
+        assertEquals(64.0F / 255.0F, MarkerColor.green(color), 0.0F);
+        assertEquals(32.0F / 255.0F, MarkerColor.blue(color), 0.0F);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void rejectsMalformedValues() {
         MarkerColor.parse("red");

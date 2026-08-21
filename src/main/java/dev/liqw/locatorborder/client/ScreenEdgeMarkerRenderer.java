@@ -3,7 +3,6 @@ package dev.liqw.locatorborder.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -43,7 +42,7 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
         setupGl();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
-                if (player.dimension != minecraft.thePlayer.dimension) continue;
+                if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
                 renderMarker(player, eye, camera, resolution, playerListPressed);
             }
         } finally {
@@ -54,7 +53,7 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
     private void renderMarker(PlayerSnapshotMessage.PlayerPosition target, Vec3 eye, CameraBasis camera,
         ScaledResolution resolution, boolean playerListPressed) {
         double dx = target.x - eye.xCoord;
-        double dy = target.y + 1.0D - eye.yCoord;
+        double dy = target.y + MarkerGeometry.HEIGHT - eye.yCoord;
         double dz = target.z - eye.zCoord;
         ScreenEdgeProjection.Point point = ScreenEdgeProjection.project(
             dot(dx, dy, dz, camera.rightX, camera.rightY, camera.rightZ),
@@ -67,15 +66,15 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
         if (point == null) return;
 
         boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, false, playerListPressed);
-        float scale = focused ? ModConfig.focusScale : 1.0F;
+        float scale = MarkerSize.scale(focused, ModConfig.waypointScale, ModConfig.focusScale);
         int size = Math.max(2, Math.round((ModConfig.playerFaces ? FACE_SIZE : DOT_SIZE) * scale));
-        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        double distance = MarkerGeometry.distance(dx, dy, dz);
         GL11.glPushMatrix();
         try {
             GL11.glTranslatef(point.x, point.y, 0.0F);
             if (ModConfig.playerFaces) renderFace(target.id, size);
-            else renderDot(size, MarkerColor.parse(ModConfig.markerColor));
-            renderLabel(target.name, (int) distance + "m", size, focused, point);
+            else MarkerDotRenderer.draw(size * 0.5F, MarkerColor.parse(ModConfig.markerColor), 1.0F, 1.0F, 1.0F);
+            renderLabel(target.name, distance, size, focused, point);
         } finally {
             GL11.glPopMatrix();
         }
@@ -86,28 +85,10 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
         PlayerFaceRenderer.drawScreen(minecraft, id, size);
     }
 
-    private static void renderDot(int size, int color) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        drawCircle(size * 0.5F + 1.0F, 0);
-        drawCircle(size * 0.5F, color);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-    }
-
-    private static void drawCircle(float radius, int color) {
-        GL11.glColor4f((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, 1.0F);
-        Tessellator tessellator = Tessellator.instance;
-        tessellator.startDrawing(GL11.GL_TRIANGLE_FAN);
-        tessellator.addVertex(0.0D, 0.0D, 0.0D);
-        for (int i = 0; i <= 16; i++) {
-            double angle = Math.PI * 2.0D * i / 16.0D;
-            tessellator.addVertex(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D);
-        }
-        tessellator.draw();
-    }
-
-    private void renderLabel(String name, String distance, int size, boolean focused,
+    private void renderLabel(String name, double distance, int size, boolean focused,
         ScreenEdgeProjection.Point point) {
         String text = MarkerLabelRenderer.text(name, distance, focused, ModConfig.displayDistance);
+        if (text == null) return;
         int width = minecraft.fontRenderer.getStringWidth(text);
         int x;
         int y;
@@ -155,16 +136,11 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
     }
 
     private static void setupGl() {
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glDisable(GL11.GL_LIGHTING);
+        MarkerRenderState.setup();
     }
 
     private static void restoreGl() {
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glPopAttrib();
+        MarkerRenderState.restore();
     }
 
     private static final class CameraBasis {

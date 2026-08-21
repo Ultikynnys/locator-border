@@ -1,16 +1,24 @@
 package dev.liqw.locatorborder.client;
 
+import dev.liqw.locatorborder.MarkerColorFormat;
+
 final class MarkerColor {
 
     private MarkerColor() {}
 
     static int parse(String value) {
-        if (value == null) throw new IllegalArgumentException("Marker color cannot be null");
-        String normalized = value.trim();
-        if (normalized.startsWith("#")) normalized = normalized.substring(1);
-        if (!normalized.matches("[0-9A-Fa-f]{6}")) {
-            throw new IllegalArgumentException("Marker color must contain exactly six hexadecimal digits");
-        }
-        return Integer.parseInt(normalized, 16) & 0xFFFFFF;
+        return MarkerColorFormat.parse(value);
+    }
+
+    static float red(int color) {
+        return (color >> 16 & 255) / 255.0F;
+    }
+
+    static float green(int color) {
+        return (color >> 8 & 255) / 255.0F;
+    }
+
+    static float blue(int color) {
+        return (color & 255) / 255.0F;
     }
 }

@@ -1,13 +1,15 @@
 package dev.liqw.locatorborder;
 
 import java.io.File;
-import java.util.regex.Pattern;
 
+import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
+
+import dev.liqw.locatorborder.client.FocusTrigger;
 
 public final class ModConfig {
 
-    public static final String[] CLIENT_CATEGORIES = { "waypoint", "focus", "compass", "network" };
+    public static final String[] CLIENT_CATEGORIES = { "waypoint", "focus", "network" };
 
     private static File configFile;
     private static Configuration configuration;
@@ -17,21 +19,12 @@ public final class ModConfig {
     public static int maximumPlayersPerSnapshot = 256;
 
     public static int inset = 4;
-    public static boolean animations = true;
-    public static boolean directionArrows = false;
+    public static float waypointScale = 1.0F;
     public static boolean playerFaces = false;
-    public static boolean distanceScale = true;
     public static String markerColor = "55FFFF";
-    public static String colorSource = "WAYPOINT";
-    public static String outlineStyle = "BORDER";
-    public static String outlineColor = "BLACK";
-    public static String focusTrigger = "HOVER";
+    public static FocusTrigger focusTrigger = FocusTrigger.HOVER;
     public static float focusScale = 1.2F;
-    public static int focusInset = 2;
-    public static boolean displayPlayerName = true;
     public static boolean displayDistance = false;
-    public static boolean compass = false;
-    public static boolean intercardinalCompass = false;
     public static int staleSnapshotTicks = 100;
 
     private ModConfig() {}
@@ -51,6 +44,7 @@ public final class ModConfig {
         config.load();
 
         removeLegacyEnabledProperty(config);
+        removeUnsupportedClientProperties(config);
         updateIntervalTicks = config.getInt(
             "updateIntervalTicks",
             "server",
@@ -72,15 +66,14 @@ public final class ModConfig {
             "Hard limit for one snapshot packet.");
 
         inset = config.getInt("inset", "waypoint", inset, 0, 100, "Distance from the screen edge in pixels.");
-        animations = config.getBoolean("animations", "waypoint", animations, "Animate focus and hotbar fading.");
-        directionArrows = config.getBoolean(
-            "directionArrows",
+        waypointScale = config.getFloat(
+            "scale",
             "waypoint",
-            directionArrows,
-            "Show an up or down marker for vertical separation.");
+            waypointScale,
+            0.25F,
+            4.0F,
+            "Unfocused waypoint scale.");
         playerFaces = config.getBoolean("playerFaces", "waypoint", playerFaces, "Render player skin faces.");
-        distanceScale = config
-            .getBoolean("distanceScale", "waypoint", distanceScale, "Scale player faces down at long distances.");
         markerColor = config.getString(
             "markerColor",
             "waypoint",
@@ -88,42 +81,20 @@ public final class ModConfig {
             "Shared RGB marker color for every player, written as six hexadecimal digits (for example 55FFFF).");
         config.getCategory("waypoint")
             .get("markerColor")
-            .setValidationPattern(Pattern.compile("#?[0-9A-Fa-f]{6}"));
-        colorSource = enumValue(config, "colorSource", "waypoint", colorSource, "WAYPOINT", "TEAM");
-        outlineStyle = enumValue(config, "outlineStyle", "waypoint", outlineStyle, "BORDER", "SHADOW", "NONE");
-        outlineColor = enumValue(config, "outlineColor", "waypoint", outlineColor, "WAYPOINT", "TEAM", "BLACK");
-        focusTrigger = enumValue(
-            config,
+            .setValidationPattern(MarkerColorFormat.configPattern());
+        String focusTriggerName = config.getString(
             "focusTrigger",
             "focus",
-            focusTrigger,
-            "HOVER",
-            "FOCAL",
-            "PLAYER_LIST",
-            "ALWAYS",
-            "NONE");
-        config.getCategory("focus")
-            .get("focusTrigger")
-            .setValidValues(new String[] { "HOVER", "FOCAL", "PLAYER_LIST", "ALWAYS", "NONE" });
+            focusTrigger.name(),
+            "Controls when waypoint labels and focused sizing are revealed.",
+            FocusTrigger.validNames());
+        focusTrigger = FocusTrigger.parse(focusTriggerName);
         focusScale = config.getFloat("scale", "focus", focusScale, 0.25F, 4.0F, "Focused waypoint scale.");
-        focusInset = config.getInt("inset", "focus", focusInset, 0, 100, "Additional focused waypoint inset.");
-        config.getBoolean(
-            "displayPlayerName",
-            "focus",
-            true,
-            "Legacy setting. Player names are always displayed above world markers.");
-        config.getCategory("focus")
-            .get("displayPlayerName")
-            .setShowInGui(false);
-        displayPlayerName = true;
         displayDistance = config.getBoolean(
             "displayDistance",
             "focus",
             displayDistance,
             "Display distance while looking at a player marker.");
-        compass = config.getBoolean("enabled", "compass", compass, "Display cardinal directions.");
-        intercardinalCompass = config
-            .getBoolean("intercardinal", "compass", intercardinalCompass, "Display intercardinal directions.");
         staleSnapshotTicks = config.getInt(
             "staleSnapshotTicks",
             "network",
@@ -156,28 +127,41 @@ public final class ModConfig {
         LocatorBorder.LOG.info(
             "Removed legacy general.enabled={}; locator visibility now starts enabled and is controlled by its keybinding.",
             legacyEnabled);
-        if (config.getCategory("general")
-            .isEmpty()) config.removeCategory(config.getCategory("general"));
+        removeCategoryIfEmpty(config, "general");
     }
 
-    private static String enumValue(Configuration config, String key, String category, String fallback,
-        String... valid) {
-        String value = config.getString(key, category, fallback, "Allowed values: " + join(valid))
-            .toUpperCase();
-        for (String candidate : valid) {
-            if (candidate.equals(value)) return value;
+    private static void removeUnsupportedClientProperties(Configuration config) {
+        removeProperties(
+            config,
+            "waypoint",
+            "animations",
+            "directionArrows",
+            "distanceScale",
+            "colorSource",
+            "outlineStyle",
+            "outlineColor");
+        removeProperties(config, "focus", "inset", "displayPlayerName");
+        if (config.hasCategory("compass")) {
+            config.removeCategory(config.getCategory("compass"));
+            LocatorBorder.LOG.info("Removed unsupported compass configuration category.");
         }
-        LocatorBorder.LOG
-            .warn("Invalid {}.{} value '{}'; using explicit default '{}'.", category, key, value, fallback);
-        return fallback;
     }
 
-    private static String join(String[] values) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0) result.append(", ");
-            result.append(values[i]);
+    private static void removeProperties(Configuration config, String categoryName, String... keys) {
+        if (!config.hasCategory(categoryName)) return;
+        ConfigCategory category = config.getCategory(categoryName);
+        for (String key : keys) {
+            if (category.remove(key) != null) {
+                LocatorBorder.LOG.info("Removed unsupported {}.{} configuration property.", categoryName, key);
+            }
         }
-        return result.toString();
+        removeCategoryIfEmpty(config, categoryName);
+    }
+
+    private static void removeCategoryIfEmpty(Configuration config, String categoryName) {
+        if (config.hasCategory(categoryName) && config.getCategory(categoryName)
+            .isEmpty()) {
+            config.removeCategory(config.getCategory(categoryName));
+        }
     }
 }

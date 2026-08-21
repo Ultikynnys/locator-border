@@ -7,45 +7,43 @@ import org.junit.Test;
 
 public final class MarkerFocusTest {
 
-    private static final double THRESHOLD = Math.cos(Math.toRadians(6.0D));
-
     @Test
     public void focusesMarkerUnderCrosshair() {
         double alignment = MarkerFocus.alignment(0.0D, 0.0D, 1.0D, 0.0D, 0.0D, 100.0D);
 
-        assertTrue(MarkerFocus.isFocused(alignment, THRESHOLD));
+        assertTrue(MarkerFocus.isFocused(alignment, MarkerFocus.AIM_ALIGNMENT));
     }
 
     @Test
     public void rejectsMarkerBehindCamera() {
         double alignment = MarkerFocus.alignment(0.0D, 0.0D, 1.0D, 0.0D, 0.0D, -100.0D);
 
-        assertFalse(MarkerFocus.isFocused(alignment, THRESHOLD));
+        assertFalse(MarkerFocus.isFocused(alignment, MarkerFocus.AIM_ALIGNMENT));
     }
 
     @Test
     public void acceptsMarkerInsidePracticalAimCone() {
         double alignment = MarkerFocus.alignment(0.0D, 0.0D, 1.0D, 5.0D, 0.0D, 100.0D);
 
-        assertTrue(MarkerFocus.isFocused(alignment, THRESHOLD));
+        assertTrue(MarkerFocus.isFocused(alignment, MarkerFocus.AIM_ALIGNMENT));
     }
 
     @Test
     public void rejectsMarkerOutsideAimCone() {
         double alignment = MarkerFocus.alignment(0.0D, 0.0D, 1.0D, 20.0D, 0.0D, 100.0D);
 
-        assertFalse(MarkerFocus.isFocused(alignment, THRESHOLD));
+        assertFalse(MarkerFocus.isFocused(alignment, MarkerFocus.AIM_ALIGNMENT));
     }
 
     @Test
     public void supportsAllFocusModes() {
-        assertTrue(MarkerFocus.reveal("ALWAYS", false, false));
-        assertTrue(MarkerFocus.reveal("HOVER", true, false));
-        assertFalse(MarkerFocus.reveal("HOVER", false, false));
-        assertTrue(MarkerFocus.reveal("FOCAL", true, false));
-        assertTrue(MarkerFocus.reveal("PLAYER_LIST", false, true));
-        assertFalse(MarkerFocus.reveal("PLAYER_LIST", true, false));
-        assertFalse(MarkerFocus.reveal("NONE", true, true));
+        assertTrue(MarkerFocus.reveal(FocusTrigger.ALWAYS, false, false));
+        assertTrue(MarkerFocus.reveal(FocusTrigger.HOVER, true, false));
+        assertFalse(MarkerFocus.reveal(FocusTrigger.HOVER, false, false));
+        assertTrue(MarkerFocus.reveal(FocusTrigger.FOCAL, true, false));
+        assertTrue(MarkerFocus.reveal(FocusTrigger.PLAYER_LIST, false, true));
+        assertFalse(MarkerFocus.reveal(FocusTrigger.PLAYER_LIST, true, false));
+        assertFalse(MarkerFocus.reveal(FocusTrigger.NONE, true, true));
     }
 
     @Test

@@ -1,19 +1,30 @@
 package dev.liqw.locatorborder.client;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 public final class MarkerLabelRendererTest {
 
     @Test
-    public void alwaysIncludesPlayerName() {
-        assertEquals("Player", MarkerLabelRenderer.text("Player", "42m", false, true));
-        assertEquals("Player", MarkerLabelRenderer.text("Player", "42m", true, false));
+    public void hidesLabelWhenNotRevealed() {
+        assertNull(MarkerLabelRenderer.text("Player", 42.9D, false, false));
+        assertNull(MarkerLabelRenderer.text("Player", 42.9D, false, true));
+    }
+
+    @Test
+    public void includesPlayerNameWhenRevealed() {
+        assertEquals("Player", MarkerLabelRenderer.text("Player", 42.9D, true, false));
     }
 
     @Test
     public void includesEnabledDistanceWhenRevealed() {
-        assertEquals("Player 42m", MarkerLabelRenderer.text("Player", "42m", true, true));
+        assertEquals("Player 42m", MarkerLabelRenderer.text("Player", 42.9D, true, true));
+    }
+
+    @Test
+    public void formatsDistanceConsistently() {
+        assertEquals("42m", MarkerLabelRenderer.distance(42.9D));
     }
 }

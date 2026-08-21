@@ -6,8 +6,13 @@ final class MarkerLabelRenderer {
 
     private MarkerLabelRenderer() {}
 
-    static String text(String name, String distance, boolean revealDistance, boolean displayDistance) {
-        return revealDistance && displayDistance ? name + " " + distance : name;
+    static String text(String name, double distance, boolean revealed, boolean displayDistance) {
+        if (!revealed) return null;
+        return displayDistance ? name + " " + distance(distance) : name;
+    }
+
+    static String distance(double distance) {
+        return (int) distance + "m";
     }
 
     static void drawOutlined(FontRenderer fontRenderer, String text, int x, int y) {
