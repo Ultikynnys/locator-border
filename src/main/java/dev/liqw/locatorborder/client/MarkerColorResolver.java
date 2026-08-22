@@ -19,13 +19,6 @@ final class MarkerColorResolver {
         throw new IllegalStateException("Unhandled color source: " + ModConfig.colorSource);
     }
 
-    static int outline(Minecraft minecraft, PlayerSnapshotMessage.PlayerPosition player) {
-        if ("BLACK".equals(ModConfig.outlineColor)) return 0;
-        if ("WAYPOINT".equals(ModConfig.outlineColor)) return MarkerColor.fromPlayer(player.id);
-        if ("TEAM".equals(ModConfig.outlineColor)) return teamColor(minecraft, player.name);
-        throw new IllegalStateException("Unhandled outline color: " + ModConfig.outlineColor);
-    }
-
     static int teamColor(Minecraft minecraft, String playerName) {
         if (minecraft.theWorld == null) return 0xFFFFFF;
         ScorePlayerTeam team = minecraft.theWorld.getScoreboard()

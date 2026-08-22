@@ -42,8 +42,7 @@ public final class WorldMarkerRenderer {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
                 boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, player == aimed, playerListPressed);
-                float focusProgress = MarkerFocusState
-                    .updateWorld(player.id, focused, ModConfig.animations, event.partialTicks);
+                float focusProgress = MarkerFocusState.updateWorld(player.id, focused);
                 renderMarker(player, focusProgress);
             }
         } finally {
@@ -89,7 +88,7 @@ public final class WorldMarkerRenderer {
                 target.z - RenderManager.instance.viewerPosZ);
             faceCamera();
             float markerScale = markerScale(distance);
-            float stateScale = MarkerSize.scale(focusProgress, ModConfig.waypointScale, ModConfig.focusScale);
+            float stateScale = MarkerSize.scale(focusProgress);
             float radius = MARKER_RADIUS * stateScale;
             GL11.glPushMatrix();
             try {
@@ -138,14 +137,13 @@ public final class WorldMarkerRenderer {
         return (float) distance * MARKER_SCALE_PER_BLOCK;
     }
 
-    private void renderLabel(String name, double distance, float radius, float markerScale, float focusProgress) {
-        String text = MarkerLabelRenderer
-            .text(name, distance, focusProgress > 0.0F, ModConfig.displayPlayerName, ModConfig.displayDistance);
+    private void renderLabel(String name, double distance, float markerSize, float labelScale, float focusProgress) {
+        String text = MarkerLabelRenderer.text(name, distance, focusProgress);
         if (text == null) return;
         GL11.glPushMatrix();
         try {
-            GL11.glTranslatef(0.0F, radius + markerScale * 4.0F, 0.0F);
-            GL11.glScalef(-markerScale, -markerScale, markerScale);
+            GL11.glTranslatef(0.0F, markerSize + labelScale * (minecraft.fontRenderer.FONT_HEIGHT + 4.0F), 0.0F);
+            GL11.glScalef(-labelScale, -labelScale, labelScale);
             int x = -minecraft.fontRenderer.getStringWidth(text) / 2;
             MarkerLabelRenderer.drawOutlined(minecraft.fontRenderer, text, x, 0);
         } finally {

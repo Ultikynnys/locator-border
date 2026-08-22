@@ -5,22 +5,40 @@ import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
+import dev.liqw.locatorborder.ModConfig;
+
 public final class MarkerLabelRendererTest {
 
     @Test
-    public void hidesLabelWhenNotRevealed() {
-        assertNull(MarkerLabelRenderer.text("Player", 42.9D, false, true, false));
-        assertNull(MarkerLabelRenderer.text("Player", 42.9D, false, true, true));
+    public void hidesLabelWhenNotFocused() {
+        ModConfig.displayPlayerName = true;
+        ModConfig.displayDistance = true;
+
+        assertNull(MarkerLabelRenderer.text("Player", 42.9D, 0.0F));
     }
 
     @Test
-    public void includesPlayerNameWhenRevealed() {
-        assertEquals("Player", MarkerLabelRenderer.text("Player", 42.9D, true, true, false));
+    public void includesPlayerNameWhenFocused() {
+        ModConfig.displayPlayerName = true;
+        ModConfig.displayDistance = false;
+
+        assertEquals("Player", MarkerLabelRenderer.text("Player", 42.9D, 1.0F));
     }
 
     @Test
-    public void includesEnabledDistanceWhenRevealed() {
-        assertEquals("Player 42m", MarkerLabelRenderer.text("Player", 42.9D, true, true, true));
+    public void includesEnabledDistanceWhenFocused() {
+        ModConfig.displayPlayerName = true;
+        ModConfig.displayDistance = true;
+
+        assertEquals("Player 42m", MarkerLabelRenderer.text("Player", 42.9D, 1.0F));
+    }
+
+    @Test
+    public void showsDistanceOnlyWhenNameDisabled() {
+        ModConfig.displayPlayerName = false;
+        ModConfig.displayDistance = true;
+
+        assertEquals("42m", MarkerLabelRenderer.text("Player", 42.9D, 1.0F));
     }
 
     @Test

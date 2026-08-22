@@ -1,7 +1,6 @@
 package dev.liqw.locatorborder.client;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
 
@@ -16,22 +15,16 @@ public final class MarkerFocusStateTest {
     }
 
     @Test
-    public void switchesImmediatelyWhenAnimationsAreDisabled() {
+    public void switchesImmediatelyWhenFocused() {
         UUID id = new UUID(1L, 2L);
 
-        assertEquals(1.0F, MarkerFocusState.updateWorld(id, true, false, 1.0F), 0.0F);
-        assertEquals(0.0F, MarkerFocusState.updateWorld(id, false, false, 1.0F), 0.0F);
+        assertEquals(1.0F, MarkerFocusState.updateWorld(id, true), 0.0F);
     }
 
     @Test
-    public void easesAnimatedFocusProgress() {
+    public void switchesImmediatelyWhenUnfocused() {
         UUID id = new UUID(3L, 4L);
 
-        float first = MarkerFocusState.updateWorld(id, true, true, 1.0F);
-        float second = MarkerFocusState.updateWorld(id, true, true, 1.0F);
-
-        assertTrue(first > 0.0F);
-        assertTrue(second > first);
-        assertTrue(second < 1.0F);
+        assertEquals(0.0F, MarkerFocusState.updateWorld(id, false), 0.0F);
     }
 }

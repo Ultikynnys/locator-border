@@ -2,14 +2,17 @@ package dev.liqw.locatorborder.client;
 
 import net.minecraft.client.gui.FontRenderer;
 
+import dev.liqw.locatorborder.ModConfig;
+
 final class MarkerLabelRenderer {
 
     private MarkerLabelRenderer() {}
 
-    static String text(String name, double distance, boolean revealed, boolean displayName, boolean displayDistance) {
-        if (!revealed || !displayName && !displayDistance) return null;
-        if (!displayName) return distance(distance);
-        return displayDistance ? name + " " + distance(distance) : name;
+    static String text(String name, double distance, float focusProgress) {
+        boolean revealed = focusProgress > 0.0F;
+        if (!revealed || !ModConfig.displayPlayerName && !ModConfig.displayDistance) return null;
+        if (!ModConfig.displayPlayerName) return distance(distance);
+        return ModConfig.displayDistance ? name + " " + distance(distance) : name;
     }
 
     static String distance(double distance) {
