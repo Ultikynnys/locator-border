@@ -1,6 +1,6 @@
 package dev.liqw.locatorborder.client;
 
-public enum FocusTrigger {
+public enum LabelDisplay {
 
     LOOK_AT,
     ALWAYS,
@@ -8,26 +8,27 @@ public enum FocusTrigger {
 
     private static final String[] NAMES = names();
 
-    public boolean reveals(boolean aimed) {
+    public boolean reveals(boolean focused) {
         switch (this) {
+            case LOOK_AT:
+                return focused;
             case ALWAYS:
                 return true;
-            case LOOK_AT:
-                return aimed;
             case NONE:
                 return false;
             default:
-                throw new IllegalStateException("Unhandled focus trigger: " + this);
+                throw new IllegalStateException("Unhandled label display mode: " + this);
         }
     }
 
-    public static FocusTrigger parse(String value) {
-        if (value == null) throw new IllegalArgumentException("Focus trigger cannot be null");
+    public static LabelDisplay parse(String value) {
+        if (value == null) throw new IllegalArgumentException("Label display cannot be null");
         String normalized = value.trim()
             .toUpperCase();
-        if ("HOVER".equals(normalized) || "FOCAL".equals(normalized) || "PLAYER_LIST".equals(normalized)) {
-            normalized = "LOOK_AT";
+        if ("PLAYERNAME".equals(normalized) || "DISTANCE".equals(normalized) || "TRUE".equals(normalized)) {
+            return LOOK_AT;
         }
+        if ("FALSE".equals(normalized)) return NONE;
         return valueOf(normalized);
     }
 
@@ -36,7 +37,7 @@ public enum FocusTrigger {
     }
 
     private static String[] names() {
-        FocusTrigger[] values = values();
+        LabelDisplay[] values = values();
         String[] names = new String[values.length];
         for (int i = 0; i < values.length; i++) names[i] = values[i].name();
         return names;

@@ -9,10 +9,12 @@ final class MarkerLabelRenderer {
     private MarkerLabelRenderer() {}
 
     static String text(String name, double distance, float focusProgress) {
-        boolean revealed = focusProgress > 0.0F;
-        if (!revealed || !ModConfig.displayPlayerName && !ModConfig.displayDistance) return null;
-        if (!ModConfig.displayPlayerName) return distance(distance);
-        return ModConfig.displayDistance ? name + " " + distance(distance) : name;
+        boolean focused = focusProgress > 0.0F;
+        boolean showName = ModConfig.playerNameDisplay.reveals(focused);
+        boolean showDistance = ModConfig.distanceDisplay.reveals(focused);
+        if (!showName && !showDistance) return null;
+        if (!showName) return distance(distance);
+        return showDistance ? name + " " + distance(distance) : name;
     }
 
     static String distance(double distance) {

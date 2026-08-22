@@ -37,13 +37,10 @@ public final class MarkerFocusTest {
 
     @Test
     public void supportsAllFocusModes() {
-        assertTrue(MarkerFocus.reveal(FocusTrigger.ALWAYS, false, false));
-        assertTrue(MarkerFocus.reveal(FocusTrigger.HOVER, true, false));
-        assertFalse(MarkerFocus.reveal(FocusTrigger.HOVER, false, false));
-        assertTrue(MarkerFocus.reveal(FocusTrigger.FOCAL, true, false));
-        assertTrue(MarkerFocus.reveal(FocusTrigger.PLAYER_LIST, false, true));
-        assertFalse(MarkerFocus.reveal(FocusTrigger.PLAYER_LIST, true, false));
-        assertFalse(MarkerFocus.reveal(FocusTrigger.NONE, true, true));
+        assertTrue(MarkerFocus.reveal(FocusTrigger.ALWAYS, false));
+        assertTrue(MarkerFocus.reveal(FocusTrigger.LOOK_AT, true));
+        assertFalse(MarkerFocus.reveal(FocusTrigger.LOOK_AT, false));
+        assertFalse(MarkerFocus.reveal(FocusTrigger.NONE, true));
     }
 
     @Test

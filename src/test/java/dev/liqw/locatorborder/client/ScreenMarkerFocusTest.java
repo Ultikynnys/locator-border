@@ -15,9 +15,4 @@ public final class ScreenMarkerFocusTest {
         assertFalse(ScreenMarkerFocus.hover(60.0F, 40.0F, point, 8.0F, 8.0F));
     }
 
-    @Test
-    public void detectsTargetsInsideFocalCone() {
-        assertTrue(ScreenMarkerFocus.focal(1.0D, 10.0D));
-        assertFalse(ScreenMarkerFocus.focal(5.0D, 10.0D));
-    }
 }

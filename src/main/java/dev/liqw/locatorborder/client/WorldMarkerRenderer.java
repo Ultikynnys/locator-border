@@ -36,12 +36,12 @@ public final class WorldMarkerRenderer {
             || minecraft.gameSettings.hideGUI) return;
 
         PlayerSnapshotMessage.PlayerPosition aimed = aimedMarker(event.partialTicks);
-        boolean playerListPressed = PlayerListFocus.isHeld(minecraft);
         setupGl();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
-                boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, player == aimed, playerListPressed);
+                if (!PlayerVisibility.shouldShow(minecraft, player)) continue;
+                boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, player == aimed);
                 float focusProgress = MarkerFocusState.updateWorld(player.id, focused);
                 renderMarker(player, focusProgress);
             }
@@ -78,7 +78,7 @@ public final class WorldMarkerRenderer {
         double dy = target.y - minecraft.thePlayer.posY;
         double dz = target.z - minecraft.thePlayer.posZ;
         double distance = MarkerGeometry.distance(dx, dy, dz);
-        int color = MarkerColorResolver.resolve(minecraft, target);
+        int color = MarkerColorResolver.resolve(target);
 
         GL11.glPushMatrix();
         try {

@@ -10,35 +10,51 @@ import dev.liqw.locatorborder.ModConfig;
 public final class MarkerLabelRendererTest {
 
     @Test
-    public void hidesLabelWhenNotFocused() {
-        ModConfig.displayPlayerName = true;
-        ModConfig.displayDistance = true;
+    public void hidesLabelWhenNotFocusedAndNothingEnabled() {
+        ModConfig.playerNameDisplay = LabelDisplay.LOOK_AT;
+        ModConfig.distanceDisplay = LabelDisplay.NONE;
 
         assertNull(MarkerLabelRenderer.text("Player", 42.9D, 0.0F));
     }
 
     @Test
     public void includesPlayerNameWhenFocused() {
-        ModConfig.displayPlayerName = true;
-        ModConfig.displayDistance = false;
+        ModConfig.playerNameDisplay = LabelDisplay.LOOK_AT;
+        ModConfig.distanceDisplay = LabelDisplay.NONE;
 
         assertEquals("Player", MarkerLabelRenderer.text("Player", 42.9D, 1.0F));
     }
 
     @Test
     public void includesEnabledDistanceWhenFocused() {
-        ModConfig.displayPlayerName = true;
-        ModConfig.displayDistance = true;
+        ModConfig.playerNameDisplay = LabelDisplay.LOOK_AT;
+        ModConfig.distanceDisplay = LabelDisplay.LOOK_AT;
 
         assertEquals("Player 42m", MarkerLabelRenderer.text("Player", 42.9D, 1.0F));
     }
 
     @Test
     public void showsDistanceOnlyWhenNameDisabled() {
-        ModConfig.displayPlayerName = false;
-        ModConfig.displayDistance = true;
+        ModConfig.playerNameDisplay = LabelDisplay.NONE;
+        ModConfig.distanceDisplay = LabelDisplay.LOOK_AT;
 
         assertEquals("42m", MarkerLabelRenderer.text("Player", 42.9D, 1.0F));
+    }
+
+    @Test
+    public void alwaysShowsNameEvenWhenUnfocused() {
+        ModConfig.playerNameDisplay = LabelDisplay.ALWAYS;
+        ModConfig.distanceDisplay = LabelDisplay.NONE;
+
+        assertEquals("Player", MarkerLabelRenderer.text("Player", 42.9D, 0.0F));
+    }
+
+    @Test
+    public void alwaysShowsDistanceEvenWhenUnfocused() {
+        ModConfig.playerNameDisplay = LabelDisplay.NONE;
+        ModConfig.distanceDisplay = LabelDisplay.ALWAYS;
+
+        assertEquals("42m", MarkerLabelRenderer.text("Player", 42.9D, 0.0F));
     }
 
     @Test

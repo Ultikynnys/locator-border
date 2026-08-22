@@ -5,7 +5,10 @@ import java.io.File;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 
+import dev.liqw.locatorborder.client.ColorSource;
 import dev.liqw.locatorborder.client.FocusTrigger;
+import dev.liqw.locatorborder.client.LabelDisplay;
+import dev.liqw.locatorborder.client.PlayerVisibilityMode;
 
 public final class ModConfig {
 
@@ -20,11 +23,12 @@ public final class ModConfig {
 
     public static float unfocusedScale = 1.0F;
     public static float focusedScale = 1.2F;
-    public static FocusTrigger focusTrigger = FocusTrigger.HOVER;
+    public static FocusTrigger focusTrigger = FocusTrigger.LOOK_AT;
     public static boolean playerFaces = false;
-    public static String colorSource = "WAYPOINT";
-    public static boolean displayPlayerName = true;
-    public static boolean displayDistance = false;
+    public static ColorSource colorSource = ColorSource.UUID;
+    public static PlayerVisibilityMode showPlayers = PlayerVisibilityMode.ALL;
+    public static LabelDisplay playerNameDisplay = LabelDisplay.LOOK_AT;
+    public static LabelDisplay distanceDisplay = LabelDisplay.NONE;
     public static int staleSnapshotTicks = 100;
 
     private ModConfig() {}
@@ -77,14 +81,34 @@ public final class ModConfig {
             FocusTrigger.validNames());
         focusTrigger = FocusTrigger.parse(focusTriggerName);
         playerFaces = config.getBoolean("playerFaces", "waypoint", playerFaces, "Render player skin faces.");
-        colorSource = enumValue(config, "colorSource", "waypoint", colorSource, "WAYPOINT", "TEAM");
-        displayPlayerName = config
-            .getBoolean("displayPlayerName", "waypoint", displayPlayerName, "Display the player name while focused.");
-        displayDistance = config.getBoolean(
-            "displayDistance",
+        String colorSourceName = config.getString(
+            "colorSource",
             "waypoint",
-            displayDistance,
-            "Display distance while looking at a player marker.");
+            colorSource.name(),
+            "Marker color source: per-player UUID hash or ServerUtilities team color.",
+            ColorSource.validNames());
+        colorSource = ColorSource.parse(colorSourceName);
+        String showPlayersName = config.getString(
+            "showPlayers",
+            "waypoint",
+            showPlayers.name(),
+            "Which players' markers are shown: everyone or only players on your team.",
+            PlayerVisibilityMode.validNames());
+        showPlayers = PlayerVisibilityMode.parse(showPlayersName);
+        String playerNameDisplayName = config.getString(
+            "playerNameDisplay",
+            "waypoint",
+            playerNameDisplay.name(),
+            "Controls when the player name label is revealed.",
+            LabelDisplay.validNames());
+        playerNameDisplay = LabelDisplay.parse(playerNameDisplayName);
+        String distanceDisplayName = config.getString(
+            "distanceDisplay",
+            "waypoint",
+            distanceDisplay.name(),
+            "Controls when the distance label is revealed.",
+            LabelDisplay.validNames());
+        distanceDisplay = LabelDisplay.parse(distanceDisplayName);
         staleSnapshotTicks = config.getInt(
             "staleSnapshotTicks",
             "network",
@@ -131,7 +155,9 @@ public final class ModConfig {
             "outlineStyle",
             "animations",
             "directionArrows",
-            "distanceScale");
+            "distanceScale",
+            "displayPlayerName",
+            "displayDistance");
         removeProperties(config, "focus", "scale", "focusTrigger", "displayPlayerName", "displayDistance", "inset");
         if (config.hasCategory("compass")) {
             config.removeCategory(config.getCategory("compass"));
@@ -148,25 +174,6 @@ public final class ModConfig {
             }
         }
         removeCategoryIfEmpty(config, categoryName);
-    }
-
-    private static String enumValue(Configuration config, String key, String category, String fallback,
-        String... valid) {
-        String value = config.getString(key, category, fallback, "Allowed values: " + join(valid))
-            .toUpperCase();
-        for (String candidate : valid) {
-            if (candidate.equals(value)) return value;
-        }
-        throw new IllegalArgumentException("Invalid " + category + "." + key + " value: " + value);
-    }
-
-    private static String join(String[] values) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0) result.append(", ");
-            result.append(values[i]);
-        }
-        return result.toString();
     }
 
     private static void removeCategoryIfEmpty(Configuration config, String categoryName) {
