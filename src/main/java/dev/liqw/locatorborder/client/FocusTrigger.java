@@ -6,8 +6,6 @@ public enum FocusTrigger {
     ALWAYS,
     NONE;
 
-    private static final String[] NAMES = names();
-
     public boolean reveals(boolean aimed) {
         switch (this) {
             case ALWAYS:
@@ -22,23 +20,10 @@ public enum FocusTrigger {
     }
 
     public static FocusTrigger parse(String value) {
-        if (value == null) throw new IllegalArgumentException("Focus trigger cannot be null");
-        String normalized = value.trim()
-            .toUpperCase();
+        String normalized = ConfigEnum.normalize(value, "Focus trigger cannot be null");
         if ("HOVER".equals(normalized) || "FOCAL".equals(normalized) || "PLAYER_LIST".equals(normalized)) {
             normalized = "LOOK_AT";
         }
         return valueOf(normalized);
-    }
-
-    public static String[] validNames() {
-        return NAMES.clone();
-    }
-
-    private static String[] names() {
-        FocusTrigger[] values = values();
-        String[] names = new String[values.length];
-        for (int i = 0; i < values.length; i++) names[i] = values[i].name();
-        return names;
     }
 }

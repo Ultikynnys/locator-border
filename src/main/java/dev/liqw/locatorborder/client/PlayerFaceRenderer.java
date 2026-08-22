@@ -11,7 +11,10 @@ import net.minecraft.util.ResourceLocation;
 
 final class PlayerFaceRenderer {
 
-    private static final float TEXTURE_SIZE = 64.0F;
+    // 1.7.10 player skins are 64x32 (ImageBufferDownload always outputs a 64x32
+    // image), so U spans 64 columns but V spans only 32 rows.
+    private static final float TEXTURE_WIDTH = 64.0F;
+    private static final float TEXTURE_HEIGHT = 32.0F;
     private static final float FACE_SIZE = 8.0F;
     private static final float FACE_V = 8.0F;
     private static final float BASE_FACE_U = 8.0F;
@@ -58,16 +61,16 @@ final class PlayerFaceRenderer {
             (int) FACE_SIZE,
             size,
             size,
-            TEXTURE_SIZE,
-            TEXTURE_SIZE);
+            TEXTURE_WIDTH,
+            TEXTURE_HEIGHT);
     }
 
     private static void drawWorldLayer(float radius, float textureX) {
         Tessellator tessellator = Tessellator.instance;
-        float minU = textureX / TEXTURE_SIZE;
-        float maxU = (textureX + FACE_SIZE) / TEXTURE_SIZE;
-        float minV = FACE_V / TEXTURE_SIZE;
-        float maxV = (FACE_V + FACE_SIZE) / TEXTURE_SIZE;
+        float minU = textureX / TEXTURE_WIDTH;
+        float maxU = (textureX + FACE_SIZE) / TEXTURE_WIDTH;
+        float minV = FACE_V / TEXTURE_HEIGHT;
+        float maxV = (FACE_V + FACE_SIZE) / TEXTURE_HEIGHT;
         tessellator.startDrawingQuads();
         tessellator.addVertexWithUV(-radius, -radius, 0.0D, minU, maxV);
         tessellator.addVertexWithUV(radius, -radius, 0.0D, maxU, maxV);

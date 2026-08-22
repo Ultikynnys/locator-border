@@ -1,7 +1,6 @@
 package dev.liqw.locatorborder.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
@@ -15,10 +14,9 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import dev.liqw.locatorborder.ModConfig;
 import dev.liqw.locatorborder.network.PlayerSnapshotMessage;
 
-public final class ScreenEdgeMarkerRenderer extends Gui {
+public final class ScreenEdgeMarkerRenderer {
 
-    private static final int DOT_SIZE = 7;
-    private static final int FACE_SIZE = 8;
+    private static final int EDGE_INSET = 4;
 
     private final Minecraft minecraft = Minecraft.getMinecraft();
     private final ClientState state;
@@ -30,7 +28,7 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
     }
 
     @SubscribeEvent
-    public void render(RenderGameOverlayEvent.Post event) {
+    public void render(RenderGameOverlayEvent.Pre event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || !locatorToggle.isEnabled()
             || minecraft.thePlayer == null
             || minecraft.theWorld == null
@@ -39,12 +37,13 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
 
         ScaledResolution resolution = event.resolution;
         Vec3 eye = minecraft.renderViewEntity.getPosition(event.partialTicks);
+        eye.yCoord += minecraft.renderViewEntity.getEyeHeight();
         CameraBasis camera = cameraBasis(event.partialTicks);
         setupGl();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
-                if (!PlayerVisibility.shouldShow(minecraft, player)) continue;
+                if (!PlayerVisibility.shouldShow(player)) continue;
                 renderMarker(player, eye, camera, resolution);
             }
         } finally {
@@ -55,42 +54,41 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
     private void renderMarker(PlayerSnapshotMessage.PlayerPosition target, Vec3 eye, CameraBasis camera,
         ScaledResolution resolution) {
         double dx = target.x - eye.xCoord;
-        double dy = target.y + MarkerGeometry.HEIGHT - eye.yCoord;
+        double dy = target.y + MarkerGeometry.MARKER_HEIGHT - eye.yCoord;
         double dz = target.z - eye.zCoord;
         double cameraX = dot(dx, dy, dz, camera.rightX, camera.rightY, camera.rightZ);
         double cameraY = dot(dx, dy, dz, camera.upX, camera.upY, camera.upZ);
         double cameraZ = dot(dx, dy, dz, camera.forwardX, camera.forwardY, camera.forwardZ);
-        int baseSize = ModConfig.playerFaces ? FACE_SIZE : DOT_SIZE;
-        ScreenEdgeProjection.Point outerPoint = ScreenEdgeProjection.project(
-            cameraX,
-            cameraY,
-            cameraZ,
-            minecraft.gameSettings.fovSetting,
-            resolution.getScaledWidth(),
-            resolution.getScaledHeight(),
-            baseSize);
+        double distance = MarkerGeometry.distance(dx, dy, dz);
+        float fov = minecraft.gameSettings.fovSetting;
+        int height = resolution.getScaledHeight();
+        ScreenEdgeProjection.Point outerPoint = ScreenEdgeProjection
+            .project(cameraX, cameraY, cameraZ, fov, resolution.getScaledWidth(), height, EDGE_INSET);
         if (outerPoint == null) return;
+        // A player behind the camera has no meaningful screen edge; clamping to the
+        // left/right edge only misleads the viewer, so do not render the dot at all.
+        if (outerPoint.behind) return;
 
-        boolean focused = isAimed(outerPoint, baseSize, resolution);
+        int aimDiameter = Math.round(MarkerSize.screenHalfSize(distance, 0.0F, fov, height) * 2.0F);
+        boolean focused = isAimed(outerPoint, aimDiameter, resolution);
         float focusProgress = MarkerFocusState.updateScreen(target.id, focused);
+        float halfSize = MarkerSize.screenHalfSize(distance, focusProgress, fov, height);
+        int size = Math.round(halfSize * 2.0F);
         ScreenEdgeProjection.Point point = ScreenEdgeProjection.project(
             cameraX,
             cameraY,
             cameraZ,
-            minecraft.gameSettings.fovSetting,
+            fov,
             resolution.getScaledWidth(),
-            resolution.getScaledHeight(),
-            baseSize);
-        float scale = MarkerSize.scale(focusProgress);
-        int size = Math.max(2, Math.round(baseSize * scale));
-        double distance = MarkerGeometry.distance(dx, dy, dz);
+            height,
+            Math.max(EDGE_INSET, size / 2));
         GL11.glPushMatrix();
         try {
             GL11.glTranslatef(point.x, point.y, 0.0F);
             if (!ModConfig.playerFaces || !renderFace(target, size)) {
-                MarkerDotRenderer.draw(size * 0.5F, MarkerColorResolver.resolve(target), 1.0F, 1.0F, 1.0F);
+                MarkerSquareRenderer.draw(size * 0.5F, MarkerColorResolver.resolve(target));
             }
-            renderLabel(target.name, distance, size, scale, focusProgress, point);
+            renderLabel(target.name, distance, size, halfSize / MarkerSize.HALF_SIZE, focusProgress, point);
         } finally {
             GL11.glPopMatrix();
         }
@@ -99,8 +97,8 @@ public final class ScreenEdgeMarkerRenderer extends Gui {
     private boolean renderFace(PlayerSnapshotMessage.PlayerPosition target, int size) {
         ResourceLocation skin = PlayerFaceRenderer.skin(minecraft, target.id, target.name);
         if (skin == null) return false;
-        int outline = 0xFF000000;
-        drawRect(-size / 2 - 1, -size / 2 - 1, (size + 1) / 2 + 1, (size + 1) / 2 + 1, outline);
+        MarkerSquareRenderer
+            .drawOutline(size / 2.0F * (1.0F + MarkerSquareRenderer.OUTLINE_RATIO), ModConfig.waypointBorderColor);
         PlayerFaceRenderer.drawScreen(minecraft, skin, size);
         return true;
     }

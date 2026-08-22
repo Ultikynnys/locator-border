@@ -53,18 +53,22 @@ public final class PlayerTracker {
         for (EntityPlayerMP recipient : online) {
             if (!COMPATIBLE_CLIENTS.contains(recipient.getUniqueID())) continue;
             ArrayList<PlayerSnapshotMessage.PlayerPosition> positions = new ArrayList<PlayerSnapshotMessage.PlayerPosition>();
+            UUID recipientId = recipient.getUniqueID();
             for (EntityPlayerMP target : online) {
                 if (target == recipient) continue;
                 if (ModConfig.sameDimensionOnly && target.dimension != recipient.dimension) continue;
                 if (positions.size() >= ModConfig.maximumPlayersPerSnapshot) break;
+                UUID targetId = target.getUniqueID();
                 positions.add(
                     new PlayerSnapshotMessage.PlayerPosition(
-                        target.getUniqueID(),
+                        targetId,
                         target.getCommandSenderName(),
                         target.dimension,
                         target.posX,
                         target.posY,
-                        target.posZ));
+                        target.posZ,
+                        FtbTeamResolver.teamColorOf(targetId),
+                        FtbTeamResolver.sameTeamAs(recipientId, targetId)));
             }
             CommonProxy.NETWORK.sendTo(new PlayerSnapshotMessage(sequence, positions), recipient);
         }

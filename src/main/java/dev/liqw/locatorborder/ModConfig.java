@@ -1,11 +1,14 @@
 package dev.liqw.locatorborder;
 
 import java.io.File;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 
 import dev.liqw.locatorborder.client.ColorSource;
+import dev.liqw.locatorborder.client.ConfigEnum;
 import dev.liqw.locatorborder.client.FocusTrigger;
 import dev.liqw.locatorborder.client.LabelDisplay;
 import dev.liqw.locatorborder.client.PlayerVisibilityMode;
@@ -25,6 +28,7 @@ public final class ModConfig {
     public static float focusedScale = 1.2F;
     public static FocusTrigger focusTrigger = FocusTrigger.LOOK_AT;
     public static boolean playerFaces = false;
+    public static int waypointBorderColor = 0x000000;
     public static ColorSource colorSource = ColorSource.UUID;
     public static PlayerVisibilityMode showPlayers = PlayerVisibilityMode.ALL;
     public static LabelDisplay playerNameDisplay = LabelDisplay.LOOK_AT;
@@ -73,42 +77,48 @@ public final class ModConfig {
             .getFloat("unfocusedScale", "waypoint", unfocusedScale, 0.25F, 4.0F, "Unfocused waypoint scale.");
         focusedScale = config
             .getFloat("focusedScale", "waypoint", focusedScale, 0.25F, 4.0F, "Focused waypoint scale.");
-        String focusTriggerName = config.getString(
+        focusTrigger = readEnum(
+            config,
+            "waypoint",
             "focusTrigger",
-            "waypoint",
-            focusTrigger.name(),
+            focusTrigger,
             "Controls when waypoint labels and focused sizing are revealed.",
-            FocusTrigger.validNames());
-        focusTrigger = FocusTrigger.parse(focusTriggerName);
+            FocusTrigger::parse);
         playerFaces = config.getBoolean("playerFaces", "waypoint", playerFaces, "Render player skin faces.");
-        String colorSourceName = config.getString(
+        waypointBorderColor = readColor(
+            config,
+            "waypoint",
+            "waypointBorderColor",
+            waypointBorderColor,
+            "Border color of waypoint markers, written as six hexadecimal digits (for example 000000 for black).");
+        colorSource = readEnum(
+            config,
+            "waypoint",
             "colorSource",
-            "waypoint",
-            colorSource.name(),
+            colorSource,
             "Marker color source: per-player UUID hash or ServerUtilities team color.",
-            ColorSource.validNames());
-        colorSource = ColorSource.parse(colorSourceName);
-        String showPlayersName = config.getString(
+            ColorSource::parse);
+        showPlayers = readEnum(
+            config,
+            "waypoint",
             "showPlayers",
-            "waypoint",
-            showPlayers.name(),
+            showPlayers,
             "Which players' markers are shown: everyone or only players on your team.",
-            PlayerVisibilityMode.validNames());
-        showPlayers = PlayerVisibilityMode.parse(showPlayersName);
-        String playerNameDisplayName = config.getString(
+            PlayerVisibilityMode::parse);
+        playerNameDisplay = readEnum(
+            config,
+            "waypoint",
             "playerNameDisplay",
-            "waypoint",
-            playerNameDisplay.name(),
+            playerNameDisplay,
             "Controls when the player name label is revealed.",
-            LabelDisplay.validNames());
-        playerNameDisplay = LabelDisplay.parse(playerNameDisplayName);
-        String distanceDisplayName = config.getString(
-            "distanceDisplay",
+            LabelDisplay::parse);
+        distanceDisplay = readEnum(
+            config,
             "waypoint",
-            distanceDisplay.name(),
+            "distanceDisplay",
+            distanceDisplay,
             "Controls when the distance label is revealed.",
-            LabelDisplay.validNames());
-        distanceDisplay = LabelDisplay.parse(distanceDisplayName);
+            LabelDisplay::parse);
         staleSnapshotTicks = config.getInt(
             "staleSnapshotTicks",
             "network",
@@ -128,6 +138,34 @@ public final class ModConfig {
     public static synchronized String getConfigPath() {
         if (configFile == null) throw new IllegalStateException("Locator Border config has not been initialized");
         return configFile.getAbsolutePath();
+    }
+
+    // Reads an enum property: Forge validates against the enum's constant names,
+    // then the enum's own parse applies any legacy aliases.
+    private static <T extends Enum<T>> T readEnum(Configuration config, String category, String key, T defaultValue,
+        String comment, Function<String, T> parser) {
+        String name = config
+            .getString(key, category, defaultValue.name(), comment, ConfigEnum.names(defaultValue.getDeclaringClass()));
+        return parser.apply(name);
+    }
+
+    // Reads a hex color like "55FFFF" (optionally '#'-prefixed), falling back
+    // to the previous value when the stored text is not valid hex.
+    private static int readColor(Configuration config, String category, String key, int fallback, String comment) {
+        String defaultValue = String.format("%06X", fallback);
+        String stored = config.getString(key, category, defaultValue, comment);
+        config.getCategory(category)
+            .get(key)
+            .setValidationPattern(Pattern.compile("#?[0-9A-Fa-f]{6}"));
+        try {
+            String hex = stored.trim();
+            if (hex.startsWith("#")) hex = hex.substring(1);
+            if (hex.length() != 6) throw new NumberFormatException("expected six hex digits");
+            return Integer.parseInt(hex, 16) & 0xFFFFFF;
+        } catch (NumberFormatException invalid) {
+            LocatorBorder.LOG.warn("Invalid {}.{} value '{}'; using default {}.", category, key, stored, defaultValue);
+            return fallback;
+        }
     }
 
     private static void removeLegacyEnabledProperty(Configuration config) {

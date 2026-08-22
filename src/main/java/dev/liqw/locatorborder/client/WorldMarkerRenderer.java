@@ -1,7 +1,6 @@
 package dev.liqw.locatorborder.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
@@ -14,11 +13,6 @@ import dev.liqw.locatorborder.ModConfig;
 import dev.liqw.locatorborder.network.PlayerSnapshotMessage;
 
 public final class WorldMarkerRenderer {
-
-    private static final float MARKER_RADIUS = 3.0F;
-    private static final float MINIMUM_MARKER_SCALE = 0.02F;
-    private static final float MARKER_SCALE_PER_BLOCK = 0.002F;
-    private static final double MARKER_SCALE_DISTANCE_THRESHOLD = 10.0D;
 
     private final Minecraft minecraft = Minecraft.getMinecraft();
     private final ClientState state;
@@ -40,7 +34,7 @@ public final class WorldMarkerRenderer {
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
-                if (!PlayerVisibility.shouldShow(minecraft, player)) continue;
+                if (!PlayerVisibility.shouldShow(player)) continue;
                 boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, player == aimed);
                 float focusProgress = MarkerFocusState.updateWorld(player.id, focused);
                 renderMarker(player, focusProgress);
@@ -52,6 +46,7 @@ public final class WorldMarkerRenderer {
 
     private PlayerSnapshotMessage.PlayerPosition aimedMarker(float partialTicks) {
         Vec3 eye = minecraft.renderViewEntity.getPosition(partialTicks);
+        eye.yCoord += minecraft.renderViewEntity.getEyeHeight();
         Vec3 look = minecraft.renderViewEntity.getLook(partialTicks);
         PlayerSnapshotMessage.PlayerPosition best = null;
         double bestAlignment = MarkerFocus.AIM_ALIGNMENT;
@@ -59,7 +54,7 @@ public final class WorldMarkerRenderer {
         for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
             if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
             double dx = player.x - eye.xCoord;
-            double dy = player.y + MarkerGeometry.HEIGHT - eye.yCoord;
+            double dy = player.y + MarkerGeometry.MARKER_HEIGHT - eye.yCoord;
             double dz = player.z - eye.zCoord;
             double alignment = MarkerFocus.alignment(look.xCoord, look.yCoord, look.zCoord, dx, dy, dz);
             double distanceSquared = dx * dx + dy * dy + dz * dz;
@@ -84,22 +79,14 @@ public final class WorldMarkerRenderer {
         try {
             GL11.glTranslated(
                 target.x - RenderManager.instance.viewerPosX,
-                target.y + MarkerGeometry.HEIGHT - RenderManager.instance.viewerPosY,
+                target.y + MarkerGeometry.MARKER_HEIGHT - RenderManager.instance.viewerPosY,
                 target.z - RenderManager.instance.viewerPosZ);
             faceCamera();
-            float markerScale = markerScale(distance);
-            float stateScale = MarkerSize.scale(focusProgress);
-            float radius = MARKER_RADIUS * stateScale;
-            GL11.glPushMatrix();
-            try {
-                GL11.glScalef(markerScale, markerScale, markerScale);
-                if (!ModConfig.playerFaces || !renderFace(target, radius)) {
-                    MarkerDotRenderer.draw(radius, color, 0.75F, 0.95F, 0.9F);
-                }
-            } finally {
-                GL11.glPopMatrix();
+            float radius = MarkerSize.worldHalfSize(distance, focusProgress);
+            if (!ModConfig.playerFaces || !renderFace(target, radius)) {
+                MarkerSquareRenderer.draw(radius, color);
             }
-            renderLabel(target.name, distance, radius * markerScale, markerScale * stateScale, focusProgress);
+            renderLabel(target.name, distance, radius, radius / MarkerSize.HALF_SIZE, focusProgress);
         } finally {
             GL11.glPopMatrix();
         }
@@ -113,28 +100,11 @@ public final class WorldMarkerRenderer {
     private boolean renderFace(PlayerSnapshotMessage.PlayerPosition target, float radius) {
         ResourceLocation skin = PlayerFaceRenderer.skin(minecraft, target.id, target.name);
         if (skin == null) return false;
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.95F);
-        drawQuad(radius + 0.75F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        MarkerSquareRenderer
+            .drawOutline(radius * (1.0F + MarkerSquareRenderer.OUTLINE_RATIO), ModConfig.waypointBorderColor);
 
         PlayerFaceRenderer.drawWorld(minecraft, skin, radius);
         return true;
-    }
-
-    private static void drawQuad(float radius) {
-        Tessellator tessellator = Tessellator.instance;
-        tessellator.startDrawingQuads();
-        tessellator.addVertex(-radius, -radius, 0.0D);
-        tessellator.addVertex(radius, -radius, 0.0D);
-        tessellator.addVertex(radius, radius, 0.0D);
-        tessellator.addVertex(-radius, radius, 0.0D);
-        tessellator.draw();
-    }
-
-    static float markerScale(double distance) {
-        if (distance <= MARKER_SCALE_DISTANCE_THRESHOLD) return MINIMUM_MARKER_SCALE;
-        return (float) distance * MARKER_SCALE_PER_BLOCK;
     }
 
     private void renderLabel(String name, double distance, float markerSize, float labelScale, float focusProgress) {

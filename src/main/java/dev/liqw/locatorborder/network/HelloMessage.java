@@ -9,7 +9,7 @@ import io.netty.buffer.ByteBuf;
 
 public final class HelloMessage implements IMessage {
 
-    public static final int PROTOCOL_VERSION = 1;
+    public static final int PROTOCOL_VERSION = 2;
     private int protocolVersion = PROTOCOL_VERSION;
 
     public HelloMessage() {}

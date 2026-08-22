@@ -44,7 +44,9 @@ public final class PlayerSnapshotMessage implements IMessage {
                 double y = buffer.readDouble();
                 double z = buffer.readDouble();
                 if (!finite(x) || !finite(y) || !finite(z)) return;
-                decoded.add(new PlayerPosition(id, name, dimension, x, y, z));
+                int teamColor = buffer.readInt();
+                boolean sameTeam = buffer.readBoolean();
+                decoded.add(new PlayerPosition(id, name, dimension, x, y, z, teamColor, sameTeam));
             }
         } catch (Exception malformed) {
             return;
@@ -65,6 +67,8 @@ public final class PlayerSnapshotMessage implements IMessage {
             buffer.writeDouble(player.x);
             buffer.writeDouble(player.y);
             buffer.writeDouble(player.z);
+            buffer.writeInt(player.teamColor);
+            buffer.writeBoolean(player.sameTeam);
         }
     }
 
@@ -92,14 +96,19 @@ public final class PlayerSnapshotMessage implements IMessage {
         public final double x;
         public final double y;
         public final double z;
+        public final int teamColor;
+        public final boolean sameTeam;
 
-        public PlayerPosition(UUID id, String name, int dimension, double x, double y, double z) {
+        public PlayerPosition(UUID id, String name, int dimension, double x, double y, double z, int teamColor,
+            boolean sameTeam) {
             this.id = id;
             this.name = name;
             this.dimension = dimension;
             this.x = x;
             this.y = y;
             this.z = z;
+            this.teamColor = teamColor;
+            this.sameTeam = sameTeam;
         }
     }
 

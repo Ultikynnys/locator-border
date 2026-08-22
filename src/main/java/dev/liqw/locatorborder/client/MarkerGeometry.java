@@ -2,7 +2,9 @@ package dev.liqw.locatorborder.client;
 
 final class MarkerGeometry {
 
-    static final double HEIGHT = 1.0D;
+    // Height above the feet where the marker floats, matching the vanilla
+    // nameplate position so the marker never overlaps the player's body.
+    static final double MARKER_HEIGHT = 2.2D;
 
     private MarkerGeometry() {}
 

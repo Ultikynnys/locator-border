@@ -24,6 +24,29 @@ public final class MarkerColorTest {
         assertEquals(32.0F / 255.0F, MarkerColor.blue(color), 0.0F);
     }
 
+    @Test
+    public void neverReturnsBlackForFill() {
+        assertEquals(0x808080, MarkerColor.ensureVisible(0x000000));
+        org.junit.Assert.assertNotEquals(0x000000, MarkerColor.ensureVisible(0x000000));
+    }
+
+    @Test
+    public void liftsNearBlackToVisibleBrightness() {
+        int lifted = MarkerColor.ensureVisible(0x000010);
+
+        assertEquals(0, lifted >> 16 & 255);
+        assertEquals(0, lifted >> 8 & 255);
+        assertEquals(64, lifted & 255);
+    }
+
+    @Test
+    public void keepsBrightColorsUnchanged() {
+        int color = 0x804020;
+
+        assertEquals(color, MarkerColor.ensureVisible(color));
+        assertEquals(0xFFFFFF, MarkerColor.ensureVisible(0xFFFFFF));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void rejectsNullPlayerId() {
         MarkerColor.fromPlayer(null);
