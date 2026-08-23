@@ -72,9 +72,10 @@ final class PlayerFaceRenderer {
     }
 
     private static void drawScreenLayer(int size, float textureX) {
-        // Render with the same direct Tessellator quad as the world face so the
-        // face is drawn at exactly half the given size. This keeps the face inside
-        // the outline square (Gui.func_152125_a drew it slightly larger, hiding it).
+        // Render with the same direct Tessellator quad as the world face (so the
+        // face stays inside the outline square), but flip V vertically: the 2D
+        // overlay uses a Y-down screen space, so the texture's top (minV) must map
+        // to the quad's top (negative y) to keep the face upright.
         float radius = size * 0.5F;
         Tessellator tessellator = Tessellator.instance;
         float minU = textureX / TEXTURE_WIDTH;
@@ -82,10 +83,10 @@ final class PlayerFaceRenderer {
         float minV = FACE_V / TEXTURE_HEIGHT;
         float maxV = (FACE_V + FACE_SIZE) / TEXTURE_HEIGHT;
         tessellator.startDrawingQuads();
-        tessellator.addVertexWithUV(-radius, -radius, 0.0D, minU, maxV);
-        tessellator.addVertexWithUV(radius, -radius, 0.0D, maxU, maxV);
-        tessellator.addVertexWithUV(radius, radius, 0.0D, maxU, minV);
-        tessellator.addVertexWithUV(-radius, radius, 0.0D, minU, minV);
+        tessellator.addVertexWithUV(-radius, -radius, 0.0D, minU, minV);
+        tessellator.addVertexWithUV(radius, -radius, 0.0D, maxU, minV);
+        tessellator.addVertexWithUV(radius, radius, 0.0D, maxU, maxV);
+        tessellator.addVertexWithUV(-radius, radius, 0.0D, minU, maxV);
         tessellator.draw();
     }
 
