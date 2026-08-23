@@ -1,5 +1,9 @@
 package dev.liqw.locatorborder.client;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.util.ResourceLocation;
@@ -29,6 +33,7 @@ public final class WorldMarkerRenderer {
             || minecraft.theWorld == null
             || minecraft.gameSettings.hideGUI) return;
 
+        captureRenderFov();
         PlayerSnapshotMessage.PlayerPosition aimed = aimedMarker(event.partialTicks);
         setupGl();
         try {
@@ -82,7 +87,7 @@ public final class WorldMarkerRenderer {
                 target.y + MarkerGeometry.MARKER_HEIGHT - RenderManager.instance.viewerPosY,
                 target.z - RenderManager.instance.viewerPosZ);
             faceCamera();
-            float radius = MarkerSize.worldHalfSize(distance, focusProgress);
+            float radius = MarkerSize.worldHalfSize(distance, focusProgress) * MarkerSize.worldRenderScale();
             if (!ModConfig.playerFaces || !renderFace(target, radius)) {
                 MarkerSquareRenderer.draw(radius, color);
             }
@@ -125,6 +130,17 @@ public final class WorldMarkerRenderer {
         MarkerRenderState.setup();
         GL11.glDisable(GL11.GL_CULL_FACE);
         GL11.glDepthMask(false);
+    }
+
+    // Reads tan(half the render FOV) from the current projection matrix so the world
+    // marker can be sized to the same FOV-independent pixels as the screen dots.
+    private static void captureRenderFov() {
+        FloatBuffer projection = ByteBuffer.allocateDirect(16 * 4)
+            .order(ByteOrder.nativeOrder())
+            .asFloatBuffer();
+        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projection);
+        float m11 = projection.get(5);
+        if (m11 != 0.0F) MarkerSize.renderTanHalfFov = 1.0F / m11;
     }
 
     private static void restoreGl() {

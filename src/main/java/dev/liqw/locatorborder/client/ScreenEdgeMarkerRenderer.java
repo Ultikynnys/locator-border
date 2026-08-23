@@ -82,10 +82,10 @@ public final class ScreenEdgeMarkerRenderer {
         // no screen-edge dot is drawn. The world dot is always rendered separately.
         if (outerPoint == null) return;
 
-        int aimDiameter = Math.round(MarkerSize.screenHalfSize(distance, 0.0F, fov, height) * 2.0F);
+        int aimDiameter = Math.round(MarkerSize.screenHalfSize(distance, 0.0F, height) * 2.0F);
         boolean focused = isAimed(outerPoint, aimDiameter, resolution);
         float focusProgress = MarkerFocusState.updateScreen(target.id, focused);
-        float halfSize = MarkerSize.screenHalfSize(distance, focusProgress, fov, height);
+        float halfSize = MarkerSize.screenHalfSize(distance, focusProgress, height);
         int size = Math.round(halfSize * 2.0F);
         ScreenEdgeProjection.Point point = ScreenEdgeProjection.project(
             dx,

@@ -27,10 +27,14 @@ public final class MarkerSizeTest {
     }
 
     @Test
-    public void screenHalfSizeProjectsTheWorldSize() {
-        // FOV 70, scaled height 540: K = 540 / (2 * tan(35 deg)) ~ 385.6.
+    public void screenHalfSizeProjectsTheWorldSizeIndependentlyOfFov() {
+        // Reference half-angle 35 deg, scaled height 540: K = 540 / (2 * tan(35 deg)) ~ 385.6.
         // World half-size at 100 blocks: 3.5 * 1.0 * 0.2 = 0.7, projected: 0.7 / 100 * K.
-        float halfSize = MarkerSize.screenHalfSize(100.0D, 0.0F, 70.0F, 540);
+        float halfSize = MarkerSize.screenHalfSize(100.0D, 0.0F, 540);
         assertEquals(2.699F, halfSize, 0.01F);
+        // The FOV must not change the screen-space size.
+        MarkerSize.renderTanHalfFov = (float) Math.tan(Math.toRadians(50.0D));
+        assertEquals(halfSize, MarkerSize.screenHalfSize(100.0D, 0.0F, 540), 0.0F);
+        MarkerSize.renderTanHalfFov = MarkerSize.REFERENCE_TAN_HALF_FOV;
     }
 }
