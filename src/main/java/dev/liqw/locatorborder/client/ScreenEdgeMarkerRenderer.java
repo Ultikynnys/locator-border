@@ -56,18 +56,25 @@ public final class ScreenEdgeMarkerRenderer {
         double dx = target.x - eye.xCoord;
         double dy = target.y + MarkerGeometry.MARKER_HEIGHT - eye.yCoord;
         double dz = target.z - eye.zCoord;
-        double cameraX = dot(dx, dy, dz, camera.rightX, camera.rightY, camera.rightZ);
-        double cameraY = dot(dx, dy, dz, camera.upX, camera.upY, camera.upZ);
-        double cameraZ = dot(dx, dy, dz, camera.forwardX, camera.forwardY, camera.forwardZ);
         double distance = MarkerGeometry.distance(dx, dy, dz);
         float fov = minecraft.gameSettings.fovSetting;
         int height = resolution.getScaledHeight();
-        ScreenEdgeProjection.Point outerPoint = ScreenEdgeProjection
-            .project(cameraX, cameraY, cameraZ, fov, resolution.getScaledWidth(), height, EDGE_INSET);
+        int width = resolution.getScaledWidth();
+        ScreenEdgeProjection.Point outerPoint = ScreenEdgeProjection.project(
+            dx,
+            dy,
+            dz,
+            camera.forwardX,
+            camera.forwardZ,
+            camera.rightX,
+            camera.rightZ,
+            fov,
+            width,
+            height,
+            EDGE_INSET);
+        // The world-space dot is visible for this target, so the world dot wins and
+        // no screen-edge dot is drawn. The world dot is always rendered separately.
         if (outerPoint == null) return;
-        // A player behind the camera has no meaningful screen edge; clamping to the
-        // left/right edge only misleads the viewer, so do not render the dot at all.
-        if (outerPoint.behind) return;
 
         int aimDiameter = Math.round(MarkerSize.screenHalfSize(distance, 0.0F, fov, height) * 2.0F);
         boolean focused = isAimed(outerPoint, aimDiameter, resolution);
@@ -75,11 +82,15 @@ public final class ScreenEdgeMarkerRenderer {
         float halfSize = MarkerSize.screenHalfSize(distance, focusProgress, fov, height);
         int size = Math.round(halfSize * 2.0F);
         ScreenEdgeProjection.Point point = ScreenEdgeProjection.project(
-            cameraX,
-            cameraY,
-            cameraZ,
+            dx,
+            dy,
+            dz,
+            camera.forwardX,
+            camera.forwardZ,
+            camera.rightX,
+            camera.rightZ,
             fov,
-            resolution.getScaledWidth(),
+            width,
             height,
             Math.max(EDGE_INSET, size / 2));
         GL11.glPushMatrix();
@@ -162,10 +173,6 @@ public final class ScreenEdgeMarkerRenderer {
 
     private static float interpolateRotation(float previous, float current, float partialTicks) {
         return previous + MathHelper.wrapAngleTo180_float(current - previous) * partialTicks;
-    }
-
-    private static double dot(double x, double y, double z, double basisX, double basisY, double basisZ) {
-        return x * basisX + y * basisY + z * basisZ;
     }
 
     private static void setupGl() {
