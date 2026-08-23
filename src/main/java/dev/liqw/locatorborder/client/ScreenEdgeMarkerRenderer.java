@@ -133,11 +133,11 @@ public final class ScreenEdgeMarkerRenderer {
         int x;
         int y;
         if (Math.abs(point.directionX) >= Math.abs(point.directionY)) {
-            x = point.directionX < 0.0F ? size / 2 + 4 : -size / 2 - width - 4;
+            x = point.directionX < 0.0F ? size / 2 + 2 : -size / 2 - width - 2;
             y = -minecraft.fontRenderer.FONT_HEIGHT / 2;
         } else {
             x = -width / 2;
-            y = point.directionY < 0.0F ? size / 2 + 3 : -size / 2 - minecraft.fontRenderer.FONT_HEIGHT - 3;
+            y = point.directionY < 0.0F ? size / 2 + 2 : -size / 2 - minecraft.fontRenderer.FONT_HEIGHT - 2;
         }
         GL11.glPushMatrix();
         try {
