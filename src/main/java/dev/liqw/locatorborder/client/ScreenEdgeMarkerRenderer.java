@@ -30,6 +30,7 @@ public final class ScreenEdgeMarkerRenderer {
     @SubscribeEvent
     public void render(RenderGameOverlayEvent.Pre event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || !locatorToggle.isEnabled()
+            || !ModConfig.screenSpaceWaypoint
             || minecraft.thePlayer == null
             || minecraft.theWorld == null
             || minecraft.renderViewEntity == null
