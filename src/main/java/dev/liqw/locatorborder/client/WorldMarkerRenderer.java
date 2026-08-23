@@ -40,7 +40,10 @@ public final class WorldMarkerRenderer {
             for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
                 if (!PlayerVisibility.shouldShow(player)) continue;
-                boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, player == aimed);
+                // Compare by id: the test waypoint is rebuilt on every waypoints()
+                // call, so reference equality would never match a freshly-aimed dot.
+                boolean focused = MarkerFocus
+                    .reveal(ModConfig.focusTrigger, aimed != null && player.id.equals(aimed.id));
                 float focusProgress = MarkerFocusState.updateWorld(player.id, focused);
                 renderMarker(player, focusProgress);
             }

@@ -42,10 +42,12 @@ public final class ScreenEdgeMarkerRenderer {
         Vec3 eye = minecraft.renderViewEntity.getPosition(event.partialTicks);
         eye.yCoord += minecraft.renderViewEntity.getEyeHeight();
         CameraBasis camera = cameraBasis(event.partialTicks);
-        setupGl();
         // The 2D overlay projection is active for the upcoming HUD, so edge waypoints
         // draw at scaled screen coordinates and stay behind the HUD itself.
         minecraft.entityRenderer.setupOverlayRendering();
+        // Apply the marker render state (depth off, blend on) after the overlay setup,
+        // which may otherwise re-enable the depth test and occlude the waypoint.
+        setupGl();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
@@ -107,7 +109,9 @@ public final class ScreenEdgeMarkerRenderer {
         try {
             GL11.glTranslatef(point.x, point.y, 0.0F);
             if (!ModConfig.playerFaces || !renderFace(target, size)) {
-                MarkerSquareRenderer.draw(size * 0.5F, MarkerColorResolver.resolve(target));
+                // Use the float half-size (not the rounded int) so the square is
+                // exactly the same size as the in-world marker.
+                MarkerSquareRenderer.draw(halfSize, MarkerColorResolver.resolve(target));
             }
             renderLabel(target.name, distance, size, halfSize / MarkerSize.HALF_SIZE, focusProgress, point);
         } finally {
