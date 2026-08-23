@@ -1,5 +1,6 @@
 package dev.liqw.locatorborder.client;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,6 +45,17 @@ public final class ClientState {
 
     public Snapshot get() {
         return current;
+    }
+
+    // The waypoints to render for the given client dimension: the live snapshot,
+    // plus an optional test waypoint at the world origin when enabled in config.
+    public List<PlayerSnapshotMessage.PlayerPosition> waypoints(int currentDimension) {
+        if (!ModConfig.testWaypoint) return current.players;
+        List<PlayerSnapshotMessage.PlayerPosition> result = new ArrayList<PlayerSnapshotMessage.PlayerPosition>(
+            current.players.size() + 1);
+        result.addAll(current.players);
+        result.add(TestWaypoint.forDimension(currentDimension));
+        return result;
     }
 
     @SubscribeEvent

@@ -42,7 +42,7 @@ public final class ScreenEdgeMarkerRenderer {
         CameraBasis camera = cameraBasis(event.partialTicks);
         setupGl();
         try {
-            for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
+            for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
                 if (!PlayerVisibility.shouldShow(player)) continue;
                 renderMarker(player, eye, camera, resolution);

@@ -32,7 +32,7 @@ public final class WorldMarkerRenderer {
         PlayerSnapshotMessage.PlayerPosition aimed = aimedMarker(event.partialTicks);
         setupGl();
         try {
-            for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
+            for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
                 if (!PlayerVisibility.shouldShow(player)) continue;
                 boolean focused = MarkerFocus.reveal(ModConfig.focusTrigger, player == aimed);

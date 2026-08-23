@@ -28,6 +28,7 @@ public final class ModConfig {
     public static float focusedScale = 1.2F;
     public static FocusTrigger focusTrigger = FocusTrigger.LOOK_AT;
     public static boolean screenSpaceWaypoint = true;
+    public static boolean testWaypoint = false;
     public static boolean playerFaces = false;
     public static int waypointBorderColor = 0x000000;
     public static ColorSource colorSource = ColorSource.UUID;
@@ -90,6 +91,11 @@ public final class ModConfig {
             "waypoint",
             screenSpaceWaypoint,
             "Pin off-screen waypoints to the screen edge. When disabled only the in-world waypoint is rendered.");
+        testWaypoint = config.getBoolean(
+            "testWaypoint",
+            "waypoint",
+            testWaypoint,
+            "Show a test waypoint at world coordinates 0,0,0 for debugging when no other players are online.");
         playerFaces = config.getBoolean("playerFaces", "waypoint", playerFaces, "Render player skin faces.");
         waypointBorderColor = readColor(
             config,
