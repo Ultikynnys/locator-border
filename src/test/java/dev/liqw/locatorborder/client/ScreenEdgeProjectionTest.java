@@ -1,6 +1,7 @@
 package dev.liqw.locatorborder.client;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -38,6 +39,20 @@ public final class ScreenEdgeProjectionTest {
         ScreenEdgeProjection.Point right = ScreenEdgeProjection.project(1.0D, 0.0D, -10.0D, 70.0F, 200, 100, 10);
 
         assertTrue(left.behind);
+        assertEquals(10.0F, left.x, 0.01F);
+        assertEquals(190.0F, right.x, 0.01F);
+    }
+
+    @Test
+    public void clampsTargetsToSideOfCameraToTheirEdge() {
+        // A teammate at the player's 3 o'clock / 9 o'clock has cameraZ ~ 0: it is
+        // to the side of the view, not behind, so it must clamp to its own edge and
+        // be rendered rather than being dropped as "behind".
+        ScreenEdgeProjection.Point left = ScreenEdgeProjection.project(-20.0D, 0.0D, 0.0D, 70.0F, 200, 100, 10);
+        ScreenEdgeProjection.Point right = ScreenEdgeProjection.project(20.0D, 0.0D, 0.0D, 70.0F, 200, 100, 10);
+
+        assertFalse(left.behind);
+        assertFalse(right.behind);
         assertEquals(10.0F, left.x, 0.01F);
         assertEquals(190.0F, right.x, 0.01F);
     }

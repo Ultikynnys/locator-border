@@ -12,8 +12,13 @@ final class ScreenEdgeProjection {
         double tanHorizontal = tanVertical * width / Math.max(1.0D, height);
         double projectedX;
         double projectedY;
-        boolean behind = cameraZ <= EPSILON;
-        if (behind) {
+        boolean inFront = cameraZ > EPSILON;
+        // Only a target clearly behind the camera is "behind". A target at the
+        // perpendicular (|cameraZ| ~ 0) is to the left/right of the view and must
+        // still clamp to its edge, so it is routed through the clamping branch but
+        // not flagged as behind (otherwise the renderer drops it).
+        boolean behind = cameraZ < -EPSILON;
+        if (!inFront) {
             projectedX = Math.abs(cameraX) > EPSILON ? Math.copySign(1.0D, cameraX) : 1.0D;
             double horizontalDistance = Math.sqrt(cameraX * cameraX + cameraZ * cameraZ);
             projectedY = -cameraY / Math.max(EPSILON, horizontalDistance * tanVertical);
