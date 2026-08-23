@@ -40,8 +40,7 @@ final class ScreenEdgeProjection {
 
         // When the target is in front and inside both frustum halves the world-space
         // dot is visible, so the world dot wins and no edge dot is drawn.
-        boolean worldVisible = forwardDot > 0.0D
-            && horizontalAngle <= halfHorizontalAngle
+        boolean worldVisible = forwardDot > 0.0D && horizontalAngle <= halfHorizontalAngle
             && Math.abs(verticalAngle) <= halfVerticalAngle;
         if (worldVisible) return null;
 
