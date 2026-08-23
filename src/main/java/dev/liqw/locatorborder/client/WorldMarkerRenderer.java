@@ -130,8 +130,6 @@ public final class WorldMarkerRenderer {
 
     private static void setupGl() {
         MarkerRenderState.setup();
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDepthMask(false);
     }
 
     // Reads tan(half the render FOV) from the current projection matrix so the world
