@@ -11,12 +11,14 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import dev.liqw.locatorborder.LocatorBorder;
 import dev.liqw.locatorborder.ModConfig;
 import dev.liqw.locatorborder.network.PlayerSnapshotMessage;
 
 public final class ScreenEdgeMarkerRenderer {
 
     private static final int EDGE_INSET = 4;
+    private static boolean screenWaypointLogged;
 
     private final Minecraft minecraft = Minecraft.getMinecraft();
     private final ClientState state;
@@ -28,7 +30,7 @@ public final class ScreenEdgeMarkerRenderer {
     }
 
     @SubscribeEvent
-    public void render(RenderGameOverlayEvent.Pre event) {
+    public void render(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || !locatorToggle.isEnabled()
             || !ModConfig.screenSpaceWaypoint
             || minecraft.thePlayer == null
@@ -41,6 +43,9 @@ public final class ScreenEdgeMarkerRenderer {
         eye.yCoord += minecraft.renderViewEntity.getEyeHeight();
         CameraBasis camera = cameraBasis(event.partialTicks);
         setupGl();
+        // Guarantee the 2D overlay projection is active so edge waypoints draw at
+        // scaled screen coordinates instead of inheriting the world projection.
+        minecraft.entityRenderer.setupOverlayRendering();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
                 if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
@@ -94,6 +99,10 @@ public final class ScreenEdgeMarkerRenderer {
             width,
             height,
             Math.max(EDGE_INSET, size / 2));
+        if (!screenWaypointLogged) {
+            screenWaypointLogged = true;
+            LocatorBorder.LOG.info("Screen waypoint for {} drawn at screen ({}, {}).", target.name, point.x, point.y);
+        }
         GL11.glPushMatrix();
         try {
             GL11.glTranslatef(point.x, point.y, 0.0F);
