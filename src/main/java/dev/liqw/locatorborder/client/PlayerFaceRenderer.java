@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
@@ -52,17 +51,21 @@ final class PlayerFaceRenderer {
     }
 
     private static void drawScreenLayer(int size, float textureX) {
-        Gui.func_152125_a(
-            -size / 2,
-            -size / 2,
-            textureX,
-            FACE_V,
-            (int) FACE_SIZE,
-            (int) FACE_SIZE,
-            size,
-            size,
-            TEXTURE_WIDTH,
-            TEXTURE_HEIGHT);
+        // Render with the same direct Tessellator quad as the world face so the
+        // face is drawn at exactly half the given size. This keeps the face inside
+        // the outline square (Gui.func_152125_a drew it slightly larger, hiding it).
+        float radius = size * 0.5F;
+        Tessellator tessellator = Tessellator.instance;
+        float minU = textureX / TEXTURE_WIDTH;
+        float maxU = (textureX + FACE_SIZE) / TEXTURE_WIDTH;
+        float minV = FACE_V / TEXTURE_HEIGHT;
+        float maxV = (FACE_V + FACE_SIZE) / TEXTURE_HEIGHT;
+        tessellator.startDrawingQuads();
+        tessellator.addVertexWithUV(-radius, -radius, 0.0D, minU, maxV);
+        tessellator.addVertexWithUV(radius, -radius, 0.0D, maxU, maxV);
+        tessellator.addVertexWithUV(radius, radius, 0.0D, maxU, minV);
+        tessellator.addVertexWithUV(-radius, radius, 0.0D, minU, minV);
+        tessellator.draw();
     }
 
     private static void drawWorldLayer(float radius, float textureX) {

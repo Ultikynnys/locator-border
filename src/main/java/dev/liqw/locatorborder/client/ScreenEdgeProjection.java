@@ -45,19 +45,17 @@ final class ScreenEdgeProjection {
         if (worldVisible) return null;
 
         // Off-screen: derive a normalized view-space position and clamp it to the
-        // screen edge. Behind the camera there is no projection, so clamp straight
-        // to the side the player must turn toward.
-        double normalizedX;
-        double normalizedY;
-        if (forwardDot <= 0.0D) {
-            normalizedX = Math.copySign(1.0D, rightDot);
-            normalizedY = -Math.tan(verticalAngle);
-        } else {
-            normalizedX = rightDot / (forwardDot * tanHorizontal);
-            normalizedY = -Math.tan(verticalAngle) / (forwardDot * tanVertical);
-        }
+        // screen edge. Any of the four edges (left/right/top/bottom) can be chosen.
+        // Targets behind the camera are reflected into the front half, keeping their
+        // left/right side, so a player directly behind is not confused for one on
+        // your left or right (it lands near the centre instead).
+        double effectiveForward = forwardDot <= 0.0D ? -forwardDot : forwardDot;
+        if (effectiveForward < EPSILON) effectiveForward = EPSILON;
+        double normalizedX = rightDot / (effectiveForward * tanHorizontal);
+        double normalizedY = -Math.tan(verticalAngle) / (effectiveForward * tanVertical);
 
-        double scale = Math.max(1.0D, Math.max(Math.abs(normalizedX), Math.abs(normalizedY)));
+        double scale = Math.max(Math.abs(normalizedX), Math.abs(normalizedY));
+        if (scale < EPSILON) scale = 1.0D;
         double directionX = normalizedX / scale;
         double directionY = normalizedY / scale;
         float halfWidth = Math.max(1.0F, width * 0.5F - inset);

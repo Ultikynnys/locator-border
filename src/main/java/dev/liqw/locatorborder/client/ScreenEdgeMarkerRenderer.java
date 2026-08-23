@@ -121,7 +121,6 @@ public final class ScreenEdgeMarkerRenderer {
         MarkerSquareRenderer
             .drawOutline(size / 2.0F * (1.0F + MarkerSquareRenderer.OUTLINE_RATIO), ModConfig.waypointBorderColor);
         PlayerFaceRenderer.drawScreen(minecraft, skin, size);
-        MarkerSquareRenderer.drawBorder(size / 2.0F, ModConfig.waypointBorderColor);
         return true;
     }
 

@@ -61,6 +61,26 @@ public final class ScreenEdgeProjectionTest {
         assertEquals(190.0F, right.x, 0.01F);
     }
 
+    @Test
+    public void clampsDirectlyBehindTargetNearTheCentre() {
+        // A teammate straight behind the camera is reflected to straight ahead, so
+        // it must not be forced onto the left/right edge (which would be confused
+        // with a player on the side).
+        ScreenEdgeProjection.Point behind = project(0.0D, 0.0D, -10.0D);
+
+        assertEquals(100.0F, behind.x, 1.0F);
+        assertEquals(50.0F, behind.y, 1.0F);
+    }
+
+    @Test
+    public void clampsBehindTargetAboveToTheTopEdge() {
+        // A teammate behind and above the camera reflects to ahead-and-up, so the
+        // edge dot lands on the top edge rather than being forced left/right.
+        ScreenEdgeProjection.Point top = project(0.0D, 20.0D, -10.0D);
+
+        assertEquals(10.0F, top.y, 0.01F);
+    }
+
     private static ScreenEdgeProjection.Point project(double dx, double dy, double dz) {
         return ScreenEdgeProjection.project(dx, dy, dz, FORWARD_X, FORWARD_Z, RIGHT_X, RIGHT_Z, 70.0F, 200, 100, 10);
     }
