@@ -30,7 +30,7 @@ public final class ScreenEdgeMarkerRenderer {
     }
 
     @SubscribeEvent
-    public void render(RenderGameOverlayEvent.Post event) {
+    public void render(RenderGameOverlayEvent.Pre event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || !locatorToggle.isEnabled()
             || !ModConfig.screenSpaceWaypoint
             || minecraft.thePlayer == null
@@ -43,8 +43,8 @@ public final class ScreenEdgeMarkerRenderer {
         eye.yCoord += minecraft.renderViewEntity.getEyeHeight();
         CameraBasis camera = cameraBasis(event.partialTicks);
         setupGl();
-        // Guarantee the 2D overlay projection is active so edge waypoints draw at
-        // scaled screen coordinates instead of inheriting the world projection.
+        // The 2D overlay projection is active for the upcoming HUD, so edge waypoints
+        // draw at scaled screen coordinates and stay behind the HUD itself.
         minecraft.entityRenderer.setupOverlayRendering();
         try {
             for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {

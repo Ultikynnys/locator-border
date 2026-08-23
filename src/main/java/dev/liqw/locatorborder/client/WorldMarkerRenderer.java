@@ -56,7 +56,7 @@ public final class WorldMarkerRenderer {
         PlayerSnapshotMessage.PlayerPosition best = null;
         double bestAlignment = MarkerFocus.AIM_ALIGNMENT;
         double bestDistanceSquared = Double.POSITIVE_INFINITY;
-        for (PlayerSnapshotMessage.PlayerPosition player : state.get().players) {
+        for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
             if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
             double dx = player.x - eye.xCoord;
             double dy = player.y + MarkerGeometry.MARKER_HEIGHT - eye.yCoord;
