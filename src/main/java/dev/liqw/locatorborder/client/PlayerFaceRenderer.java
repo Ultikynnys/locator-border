@@ -8,6 +8,9 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
+import dev.liqw.locatorborder.ModConfig;
+import dev.liqw.locatorborder.network.PlayerSnapshotMessage;
+
 final class PlayerFaceRenderer {
 
     // 1.7.10 player skins are 64x32 (ImageBufferDownload always outputs a 64x32
@@ -28,6 +31,24 @@ final class PlayerFaceRenderer {
         ResourceLocation skin = AbstractClientPlayer.getLocationSkin(name);
         AbstractClientPlayer.getDownloadImageSkin(skin, name);
         return skin;
+    }
+
+    // Shared by the world and screen-edge renderers so a player-face waypoint always
+    // draws the same outline + face. halfSize is the face's half-size (world units
+    // for a world marker, pixels for a screen marker); screenSpace picks the 2D
+    // draw. Returns true when the face was drawn, false when no skin is available.
+    static boolean drawFace(Minecraft minecraft, PlayerSnapshotMessage.PlayerPosition target, float halfSize,
+        boolean screenSpace) {
+        ResourceLocation skin = skin(minecraft, target.id, target.name);
+        if (skin == null) return false;
+        MarkerSquareRenderer
+            .drawOutline(halfSize * (1.0F + MarkerSquareRenderer.OUTLINE_RATIO), ModConfig.waypointBorderColor);
+        if (screenSpace) {
+            drawScreen(minecraft, skin, Math.round(halfSize * 2.0F));
+        } else {
+            drawWorld(minecraft, skin, halfSize);
+        }
+        return true;
     }
 
     static void drawScreen(Minecraft minecraft, ResourceLocation skin, int size) {

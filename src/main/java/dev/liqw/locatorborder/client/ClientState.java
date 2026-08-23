@@ -58,6 +58,21 @@ public final class ClientState {
         return result;
     }
 
+    // The waypoints that should actually be drawn in the given dimension: same
+    // dimension as the client and not filtered out by visibility. Shared by the
+    // world and screen-edge renderers so both draw the same set.
+    public List<PlayerSnapshotMessage.PlayerPosition> waypointsForRender(int currentDimension) {
+        List<PlayerSnapshotMessage.PlayerPosition> all = waypoints(currentDimension);
+        List<PlayerSnapshotMessage.PlayerPosition> result = new ArrayList<PlayerSnapshotMessage.PlayerPosition>(
+            all.size());
+        for (PlayerSnapshotMessage.PlayerPosition player : all) {
+            if (!MarkerGeometry.isInDimension(player.dimension, currentDimension)) continue;
+            if (!PlayerVisibility.shouldShow(player)) continue;
+            result.add(player);
+        }
+        return result;
+    }
+
     @SubscribeEvent
     public void onConnected(FMLNetworkEvent.ClientConnectedToServerEvent event) {
         resetConnection();

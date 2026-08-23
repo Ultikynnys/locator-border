@@ -6,7 +6,6 @@ import java.nio.FloatBuffer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 
@@ -37,9 +36,8 @@ public final class WorldMarkerRenderer {
         PlayerSnapshotMessage.PlayerPosition aimed = aimedMarker(event.partialTicks);
         setupGl();
         try {
-            for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
-                if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
-                if (!PlayerVisibility.shouldShow(player)) continue;
+            for (PlayerSnapshotMessage.PlayerPosition player : state
+                .waypointsForRender(minecraft.thePlayer.dimension)) {
                 // Compare by id: the test waypoint is rebuilt on every waypoints()
                 // call, so reference equality would never match a freshly-aimed dot.
                 boolean focused = MarkerFocus
@@ -91,7 +89,7 @@ public final class WorldMarkerRenderer {
                 target.z - RenderManager.instance.viewerPosZ);
             faceCamera();
             float radius = MarkerSize.worldHalfSize(distance, focusProgress) * MarkerSize.worldRenderScale();
-            if (!ModConfig.playerFaces || !renderFace(target, radius)) {
+            if (!ModConfig.playerFaces || !PlayerFaceRenderer.drawFace(minecraft, target, radius, false)) {
                 MarkerSquareRenderer.draw(radius, color);
             }
             renderLabel(target.name, distance, radius, radius / MarkerSize.HALF_SIZE, focusProgress);
@@ -103,15 +101,6 @@ public final class WorldMarkerRenderer {
     private static void faceCamera() {
         GL11.glRotatef(-RenderManager.instance.playerViewY, 0.0F, 1.0F, 0.0F);
         GL11.glRotatef(RenderManager.instance.playerViewX, 1.0F, 0.0F, 0.0F);
-    }
-
-    private boolean renderFace(PlayerSnapshotMessage.PlayerPosition target, float radius) {
-        ResourceLocation skin = PlayerFaceRenderer.skin(minecraft, target.id, target.name);
-        if (skin == null) return false;
-        MarkerSquareRenderer
-            .drawOutline(radius * (1.0F + MarkerSquareRenderer.OUTLINE_RATIO), ModConfig.waypointBorderColor);
-        PlayerFaceRenderer.drawWorld(minecraft, skin, radius);
-        return true;
     }
 
     private void renderLabel(String name, double distance, float markerSize, float labelScale, float focusProgress) {

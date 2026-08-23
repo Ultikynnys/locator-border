@@ -3,7 +3,6 @@ package dev.liqw.locatorborder.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.MathHelper;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
@@ -49,9 +48,8 @@ public final class ScreenEdgeMarkerRenderer {
         // which may otherwise re-enable the depth test and occlude the waypoint.
         setupGl();
         try {
-            for (PlayerSnapshotMessage.PlayerPosition player : state.waypoints(minecraft.thePlayer.dimension)) {
-                if (!MarkerGeometry.isInDimension(player.dimension, minecraft.thePlayer.dimension)) continue;
-                if (!PlayerVisibility.shouldShow(player)) continue;
+            for (PlayerSnapshotMessage.PlayerPosition player : state
+                .waypointsForRender(minecraft.thePlayer.dimension)) {
                 renderMarker(player, eye, camera, resolution);
             }
         } finally {
@@ -108,7 +106,7 @@ public final class ScreenEdgeMarkerRenderer {
         GL11.glPushMatrix();
         try {
             GL11.glTranslatef(point.x, point.y, 0.0F);
-            if (!ModConfig.playerFaces || !renderFace(target, size)) {
+            if (!ModConfig.playerFaces || !PlayerFaceRenderer.drawFace(minecraft, target, halfSize, true)) {
                 // Use the float half-size (not the rounded int) so the square is
                 // exactly the same size as the in-world marker.
                 MarkerSquareRenderer.draw(halfSize, MarkerColorResolver.resolve(target));
@@ -117,15 +115,6 @@ public final class ScreenEdgeMarkerRenderer {
         } finally {
             GL11.glPopMatrix();
         }
-    }
-
-    private boolean renderFace(PlayerSnapshotMessage.PlayerPosition target, int size) {
-        ResourceLocation skin = PlayerFaceRenderer.skin(minecraft, target.id, target.name);
-        if (skin == null) return false;
-        MarkerSquareRenderer
-            .drawOutline(size / 2.0F * (1.0F + MarkerSquareRenderer.OUTLINE_RATIO), ModConfig.waypointBorderColor);
-        PlayerFaceRenderer.drawScreen(minecraft, skin, size);
-        return true;
     }
 
     private void renderLabel(String name, double distance, int size, float scale, float focusProgress,
