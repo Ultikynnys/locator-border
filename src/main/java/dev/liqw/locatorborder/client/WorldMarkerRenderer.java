@@ -107,8 +107,8 @@ public final class WorldMarkerRenderer {
         if (skin == null) return false;
         MarkerSquareRenderer
             .drawOutline(radius * (1.0F + MarkerSquareRenderer.OUTLINE_RATIO), ModConfig.waypointBorderColor);
-
         PlayerFaceRenderer.drawWorld(minecraft, skin, radius);
+        MarkerSquareRenderer.drawBorder(radius, ModConfig.waypointBorderColor);
         return true;
     }
 

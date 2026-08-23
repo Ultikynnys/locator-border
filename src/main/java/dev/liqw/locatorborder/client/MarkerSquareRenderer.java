@@ -33,6 +33,41 @@ final class MarkerSquareRenderer {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
 
+    // Draws a hollow square border on top of a face so the outline is always
+    // visible regardless of how the face texture is rendered. Shared by the world
+    // and screen-edge renderers so the face outline looks identical.
+    static void drawBorder(float halfSize, int color) {
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        float thickness = Math.max(1.0F, halfSize * OUTLINE_RATIO);
+        GL11.glColor4f(MarkerColor.red(color), MarkerColor.green(color), MarkerColor.blue(color), 1.0F);
+        Tessellator tessellator = Tessellator.instance;
+        tessellator.startDrawingQuads();
+        float h = halfSize;
+        float t = thickness;
+        // top
+        tessellator.addVertex(-h, -h, 0.0D);
+        tessellator.addVertex(h, -h, 0.0D);
+        tessellator.addVertex(h, -h + t, 0.0D);
+        tessellator.addVertex(-h, -h + t, 0.0D);
+        // bottom
+        tessellator.addVertex(-h, h - t, 0.0D);
+        tessellator.addVertex(h, h - t, 0.0D);
+        tessellator.addVertex(h, h, 0.0D);
+        tessellator.addVertex(-h, h, 0.0D);
+        // left
+        tessellator.addVertex(-h, -h + t, 0.0D);
+        tessellator.addVertex(-h + t, -h + t, 0.0D);
+        tessellator.addVertex(-h + t, h - t, 0.0D);
+        tessellator.addVertex(-h, h - t, 0.0D);
+        // right
+        tessellator.addVertex(h - t, -h + t, 0.0D);
+        tessellator.addVertex(h, -h + t, 0.0D);
+        tessellator.addVertex(h, h - t, 0.0D);
+        tessellator.addVertex(h - t, h - t, 0.0D);
+        tessellator.draw();
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+    }
+
     private static void drawQuad(float halfSize, int color, float alpha) {
         GL11.glColor4f(MarkerColor.red(color), MarkerColor.green(color), MarkerColor.blue(color), alpha);
         Tessellator tessellator = Tessellator.instance;
